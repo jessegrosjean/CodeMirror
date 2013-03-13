@@ -10,7 +10,17 @@
   });
 
   function buildKeymap(pairs) {
-    var map = {name : "autoCloseBrackets"};
+    var map = {
+      name : "autoCloseBrackets",
+      Backspace: function(cm) {
+        var cur = cm.getCursor(), line = cm.getLine(cur.line);
+        if (cur.ch && cur.ch < line.length &&
+            pairs.indexOf(line.slice(cur.ch - 1, cur.ch + 1)) % 2 == 0)
+          cm.replaceRange("", CodeMirror.Pos(cur.line, cur.ch - 1), CodeMirror.Pos(cur.line, cur.ch + 1));
+        else
+          return CodeMirror.Pass;
+      }
+    };
     for (var i = 0; i < pairs.length; i += 2) (function(left, right) {
       function maybeOverwrite(cm) {
         var cur = cm.getCursor(), ahead = cm.getRange(cur, CodeMirror.Pos(cur.line, cur.ch + 1));

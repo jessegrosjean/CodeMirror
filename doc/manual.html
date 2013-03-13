@@ -788,6 +788,9 @@
       to <a href="#extendSelection"><code>extendSelection</code></a>
       to leave the selection anchor in place.</dd>
 
+      <dt id="hasFocus"><code>cm.hasFocus() → bool</code></dt>
+      <dd>Tells you whether the editor currently has focus.</dd>
+
       <dt id="findPosH"><code>cm.findPosH(start, amount, unit, visually) → object</code></dt>
       <dd>Used to find the target position for horizontal cursor
       motion. <code>start</code> is a <code>{line, ch}</code>
@@ -1546,6 +1549,12 @@
       called <code>newlineAndIndentContinueComment</code> that you can
       bind <code>Enter</code> to in order to have the editor prefix
       new lines inside C-like block comments with an asterisk.</dd>
+      <dt id="addon_placeholder"><a href="../addon/display/placeholder.js"><code>display/placeholder.js</code></a></dt>
+      <dd>Adds a <code>placeholder</code> option that can be used to
+      make text appear in the editor when it is empty and not focused.
+      Also gives the editor a <code>CodeMirror-empty</code> CSS class
+      whenever it doesn't contain any text.
+      See <a href="../demo/placeholder.html">the demo</a>.</dd>
     </dl>
 
     <h2 id="modeapi">Writing CodeMirror Modes</h2>
