@@ -352,7 +352,7 @@
     <dl>
       <dt id="event_change"><code>"change" (instance, changeObj)</code></dt>
       <dd>Fires every time the content of the editor is changed.
-      The <code>changeObj</code> is a <code>{from, to, text,
+      The <code>changeObj</code> is a <code>{from, to, text, removed,
       next}</code> object containing information about the changes
       that occurred as second argument. <code>from</code>
       and <code>to</code> are the positions (in the pre-change
@@ -360,8 +360,10 @@
       example, it might be <code>{ch:0, line:18}</code> if the
       position is at the beginning of line #19). <code>text</code> is
       an array of strings representing the text that replaced the
-      changed range (split by line). If multiple changes happened
-      during a single operation, the object will have
+      changed range (split by line). <code>removed</code> is the text
+      that used to be between <code>from</code> and <code>to</code>,
+      which is overwritten by this change. If multiple changes
+      happened during a single operation, the object will have
       a <code>next</code> property pointing to another change object
       (which may point to another, etc).</dd>
 
@@ -466,9 +468,12 @@
       is associated with the <em>start</em> of the line. Mostly useful
       when you need to find out when your <a href="#setGutterMarker">gutter
       markers</a> on a given line are removed.</dd>
-      <dt id="event_line_change"><code>"change" ()</code></dt>
+      <dt id="event_line_change"><code>"change" (line, changeObj)</code></dt>
       <dd>Fires when the line's text content is changed in any way
-      (but the line is not deleted outright).</dd>
+      (but the line is not deleted outright). The <code>change</code>
+      object is similar to the one passed
+      to <a href="#event_change">change event</a> on the editor
+      object.</dd>
     </dl>
 
     <p>Marked range handles, as returned
