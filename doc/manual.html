@@ -482,6 +482,11 @@
     following events:</p>
 
     <dl>
+      <dt id="event_beforeCursorEnter"><code>"beforeCursorEnter" ()</code></dt>
+      <dd>Fired when the cursor enters the marked range. From this
+      event handler, the editor state may be inspected
+      but <em>not</em> modified, with the exception that the range on
+      which the event fires may be cleared.</dd>
       <dt id="event_clear"><code>"clear" ()</code></dt>
       <dd>Fired when the range is cleared, either through cursor
       movement in combination
@@ -829,16 +834,18 @@
       <dd>Retrieves the current value of the given option for this
       editor instance.</dd>
 
-      <dt id="addKeyMap"><code>cm.addKeyMap(map)</code></dt>
-      <dd>Attach an additional <a href="#keymaps">keymap</a> to the editor. This is mostly
-      useful for add-ons that need to register some key handlers
-      without trampling on
+      <dt id="addKeyMap"><code>cm.addKeyMap(map, bottom)</code></dt>
+      <dd>Attach an additional <a href="#keymaps">keymap</a> to the
+      editor. This is mostly useful for add-ons that need to register
+      some key handlers without trampling on
       the <a href="#option_extraKeys"><code>extraKeys</code></a>
-      option. Maps added in this way have a lower precedence
-      than <code>extraKeys</code>, a higher precedence than the
-      base <a href="#option_keyMap"><code>keyMap</code></a>, and
-      between them, the maps added earlier have a higher precedence
-      than those added later.</dd>
+      option. Maps added in this way have a higher precedence than
+      the <code>extraKeys</code>
+      and <a href="#option_keyMap"><code>keyMap</code></a> options,
+      and between them, the maps added earlier have a lower precedence
+      than those added later, unless the <code>bottom</code> argument
+      was passed, in which case they end up below other keymaps added
+      with this method.</dd>
       <dt id="removeKeyMap"><code>cm.removeKeyMap(map)</code></dt>
       <dd>Disable a keymap added
       with <a href="#addKeyMap"><code>addKeyMap</code></a>. Either
@@ -1553,10 +1560,11 @@
       editor instance to refresh its mode when the loading
       succeeded. See the <a href="../demo/loadmode.html">demo</a>.</dd>
       <dt id="addon_continuecomment"><a href="../addon/edit/continuecomment.js"><code>edit/continuecomment.js</code></a></dt>
-      <dd>Adds a <a href="#commands">command</a>
-      called <code>newlineAndIndentContinueComment</code> that you can
-      bind <code>Enter</code> to in order to have the editor prefix
-      new lines inside C-like block comments with an asterisk.</dd>
+      <dd>Adds an <code>continueComments</code> option, which can be
+      set to true to have the editor prefix new lines inside C-like
+      block comments with an asterisk when Enter is pressed. It can
+      also be set to a string in order to bind this functionality to a
+      specific key..</dd>
       <dt id="addon_placeholder"><a href="../addon/display/placeholder.js"><code>display/placeholder.js</code></a></dt>
       <dd>Adds a <code>placeholder</code> option that can be used to
       make text appear in the editor when it is empty and not focused.
