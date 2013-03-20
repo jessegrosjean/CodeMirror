@@ -425,6 +425,13 @@
 
       <dt id="event_update"><code>"update" (instance)</code></dt>
       <dd>Will be fired whenever CodeMirror updates its DOM display.</dd>
+
+      <dt id="event_renderLine"><code>"renderLine" (instance, line, element)</code></dt>
+      <dd>Fired whenever a line is (re-)rendered to the DOM. Fired
+      right after the DOM element is built, <em>before</em> it is
+      added to the document. The handler may mess with the style of
+      the resulting element, or add event handlers, but
+      should <em>not</em> try to change the state of the editor.</dd>
     </dl>
 
     <p>It is also possible to <a href="#on">register</a> events on
@@ -1221,6 +1228,11 @@
       or <code>"local"</code>.</dd>
       <dt id="defaultTextHeight"><code>cm.defaultTextHeight() → number</code></dt>
       <dd>Returns the line height of the default font for the editor.</dd>
+      <dt id="defaultCharWidth"><code>cm.defaultCharWidth() → number</code></dt>
+      <dd>Returns the pixel width of an 'x' in the default font for
+      the editor. (Note that for non-monospace fonts, this is mostly
+      useless, and even for monospace fonts, non-ascii characters
+      might have a different width).</dd>
 
       <dt id="getViewport"><code>cm.getViewport() → object</code></dt>
       <dd>Returns a <code>{from, to}</code> object indicating the
@@ -1454,19 +1466,15 @@
       a CodeMirror instance and a line number, attempt to fold or
       unfold the block starting at the given line. A range-finder is a
       language-specific function that also takes an instance and a
-      line number, and returns an range to be folded, or null if
-      no block is started on that line. This file
-      provides <code>CodeMirror.braceRangeFinder</code>, which finds
-      blocks in brace languages (JavaScript, C, Java,
+      line number, and returns an range to be folded, or null if no
+      block is started on that line. There are files in
+      the <a href="../addon/fold/"><code>addon/fold/</code></a>
+      directory providing <code>CodeMirror.braceRangeFinder</code>,
+      which finds blocks in brace languages (JavaScript, C, Java,
       etc), <code>CodeMirror.indentRangeFinder</code>, for languages
       where indentation determines block structure (Python, Haskell),
       and <code>CodeMirror.tagRangeFinder</code>, for XML-style
       languages.</dd>
-      <dt id="addon_collapserange"><a href="../addon/fold/collapserange.js"><code>fold/collapserange.js</code></a></dt>
-      <dd>Another approach to
-      folding. <a href="../demo/collapserange.html">See demo</a>.
-      Allows the user to select a range to fold by clicking in the
-      gutter.</dd>
       <dt id="addon_runmode"><a href="../addon/runmode/runmode.js"><code>runmode/runmode.js</code></a></dt>
       <dd>Can be used to run a CodeMirror mode over text without
       actually opening an editor instance.
@@ -1761,11 +1769,10 @@
     extra methods, <code>innerMode</code> which, given a state object,
     returns a <code>{state, mode}</code> object with the inner mode
     and its state for the current position. These are used by utility
-    scripts such as the <a href="#addon_formatting">autoformatter</a>
-    and the <a href="#addon_closetag">tag closer</a> to get context
-    information. Use the <code>CodeMirror.innerMode</code> helper
-    function to, starting from a mode and a state, recursively walk
-    down to the innermost mode and state.</p>
+    scripts such as the <a href="#addon_closetag">tag closer</a> to
+    get context information. Use the <code>CodeMirror.innerMode</code>
+    helper function to, starting from a mode and a state, recursively
+    walk down to the innermost mode and state.</p>
 
     <p>To make indentation work properly in a nested parser, it is
     advisable to give the <code>startState</code> method of modes that
