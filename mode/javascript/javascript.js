@@ -11,7 +11,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     function kw(type) {return {type: type, style: "keyword"};}
     var A = kw("keyword a"), B = kw("keyword b"), C = kw("keyword c");
     var operator = kw("operator"), atom = {type: "atom", style: "atom"};
-    
+
     var jsKeywords = {
       "if": A, "while": A, "with": A, "else": B, "do": B, "try": B, "finally": B,
       "return": C, "break": C, "continue": C, "new": C, "delete": C, "throw": C,
@@ -87,7 +87,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     else if (ch == "0" && stream.eat(/x/i)) {
       stream.eatWhile(/[\da-f]/i);
       return ret("number", "number");
-    }      
+    }
     else if (/\d/.test(ch) || ch == "-" && stream.eat(/\d/)) {
       stream.match(/^\d*(?:\.\d*)?(?:[eE][+\-]?\d+)?/);
       return ret("number", "number");
@@ -170,7 +170,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     // Communicate our context to the combinators.
     // (Less wasteful than consing up a hundred closures on every call.)
     cx.state = state; cx.stream = stream; cx.marked = null, cx.cc = cc;
-  
+
     if (!state.lexical.hasOwnProperty("align"))
       state.lexical.align = true;
 
@@ -282,7 +282,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     if (type.match(/[;\}\)\],]/)) return pass();
     return pass(expression);
   }
-    
+
   function maybeoperator(type, value) {
     if (type == "operator") {
       if (/\+\+|--/.test(value)) return cont(maybeoperator);
@@ -290,7 +290,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
       return cont(expression);
     }
     if (type == ";") return;
-    if (type == "(") return cont(pushlex(")"), commasep(expression, ")"), poplex, maybeoperator);
+    if (type == "(") return cont(pushlex(")", "call"), commasep(expression, ")"), poplex, maybeoperator);
     if (type == ".") return cont(property, maybeoperator);
     if (type == "[") return cont(pushlex("]"), expression, expect("]"), poplex, maybeoperator);
   }
@@ -318,7 +318,11 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
   }
   function commasep(what, end) {
     function proceed(type) {
-      if (type == ",") return cont(what, proceed);
+      if (type == ",") {
+        var lex = cx.state.lexical;
+        if (lex.info == "call") lex.pos = (lex.pos || 0) + 1;
+        return cont(what, proceed);
+      }
       if (type == end) return cont();
       return cont(expect(end));
     }
@@ -411,6 +415,11 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
       var firstChar = textAfter && textAfter.charAt(0), lexical = state.lexical;
       if (lexical.type == "stat" && firstChar == "}") lexical = lexical.prev;
       var type = lexical.type, closing = firstChar == type;
+      if (parserConfig.statementIndent != null) {
+        if (type == ")" && lexical.prev && lexical.prev.type == "stat") lexical = lexical.prev;
+        if (lexical.type == "stat") return lexical.indented + parserConfig.statementIndent;
+      }
+
       if (type == "vardef") return lexical.indented + (state.lastType == "operator" || state.lastType == "," ? 4 : 0);
       else if (type == "form" && firstChar == "{") return lexical.indented;
       else if (type == "form") return lexical.indented + indentUnit;
