@@ -255,6 +255,7 @@
     { keys: ['P'], type: 'action', action: 'paste',
         actionArgs: { after: false }},
     { keys: ['r', 'character'], type: 'action', action: 'replace' },
+    { keys: ['R'], type: 'action', action: 'enterReplaceMode' },
     { keys: ['u'], type: 'action', action: 'undo' },
     { keys: ['Ctrl-r'], type: 'action', action: 'redo' },
     { keys: ['m', 'character'], type: 'action', action: 'setMark' },
@@ -834,7 +835,7 @@
               return;
             }
             var query = cm.getLine(word.start.line).substring(word.start.ch,
-                word.end.ch + 1);
+                word.end.ch);
             if (isKeyword) {
               query = '\\b' + query + '\\b';
             } else {
@@ -1605,6 +1606,10 @@
           }
         }
       },
+      enterReplaceMode: function(cm, actionArgs) {
+        cm.setOption('keyMap', 'vim-replace');
+        cm.toggleOverwrite();
+      },
       incrementNumberToken: function(cm, actionArgs, vim) {
         var cur = cm.getCursor();
         var lineStr = cm.getLine(cur.line);
@@ -1861,15 +1866,27 @@
 
       var wordAfterRegex = matchRegex.exec(textAfterIdx);
       var wordStart = idx;
-      var wordEnd = idx + wordAfterRegex[0].length - 1;
+      var wordEnd = idx + wordAfterRegex[0].length;
       // TODO: Find a better way to do this. It will be slow on very long lines.
-      var wordBeforeRegex = matchRegex.exec(reverse(textBeforeIdx));
+      var revTextBeforeIdx = reverse(textBeforeIdx);
+      var wordBeforeRegex = matchRegex.exec(revTextBeforeIdx);
       if (wordBeforeRegex) {
         wordStart -= wordBeforeRegex[0].length;
       }
 
       if (inclusive) {
-        wordEnd++;
+        // If present, trim all whitespace after word.
+        // Otherwise, trim all whitespace before word.
+        var textAfterWordEnd = line.substring(wordEnd);
+        var whitespacesAfterWord = textAfterWordEnd.match(/^\s*/)[0].length;
+        if (whitespacesAfterWord > 0) {
+          wordEnd += whitespacesAfterWord;
+        } else {
+          var revTrim = revTextBeforeIdx.length - wordStart;
+          var textBeforeWordStart = revTextBeforeIdx.substring(revTrim);
+          var whitespacesBeforeWord = textBeforeWordStart.match(/^\s*/)[0].length;
+          wordStart -= whitespacesBeforeWord;
+        }
       }
 
       return { start: { line: cur.line, ch: wordStart },
@@ -3032,6 +3049,20 @@
             CodeMirror.commands.newlineAndIndent;
         fn(cm);
       },
+      fallthrough: ['default']
+    };
+
+    function exitReplaceMode(cm) {
+      cm.toggleOverwrite();
+      cm.setCursor(cm.getCursor().line, cm.getCursor().ch-1, true);
+      cm.setOption('keyMap', 'vim');
+    }
+
+    CodeMirror.keyMap['vim-replace'] = {
+      'Esc': exitReplaceMode,
+      'Ctrl-[': exitReplaceMode,
+      'Ctrl-C': exitReplaceMode,
+      'Backspace': 'goCharLeft',
       fallthrough: ['default']
     };
 
