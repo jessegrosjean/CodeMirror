@@ -58,26 +58,26 @@
   var defaultKeymap = [
     // Key to key mapping. This goes first to make it possible to override
     // existing mappings.
-    { keys: ['Left'], type: 'keyToKey', toKeys: ['h'] },
-    { keys: ['Right'], type: 'keyToKey', toKeys: ['l'] },
-    { keys: ['Up'], type: 'keyToKey', toKeys: ['k'] },
-    { keys: ['Down'], type: 'keyToKey', toKeys: ['j'] },
-    { keys: ['Space'], type: 'keyToKey', toKeys: ['l'] },
-    { keys: ['Backspace'], type: 'keyToKey', toKeys: ['h'] },
-    { keys: ['Ctrl-Space'], type: 'keyToKey', toKeys: ['W'] },
-    { keys: ['Ctrl-Backspace'], type: 'keyToKey', toKeys: ['B'] },
-    { keys: ['Shift-Space'], type: 'keyToKey', toKeys: ['w'] },
-    { keys: ['Shift-Backspace'], type: 'keyToKey', toKeys: ['b'] },
-    { keys: ['Ctrl-n'], type: 'keyToKey', toKeys: ['j'] },
-    { keys: ['Ctrl-p'], type: 'keyToKey', toKeys: ['k'] },
-    { keys: ['Ctrl-['], type: 'keyToKey', toKeys: ['Esc'] },
-    { keys: ['Ctrl-c'], type: 'keyToKey', toKeys: ['Esc'] },
+    { keys: ['<Left>'], type: 'keyToKey', toKeys: ['h'] },
+    { keys: ['<Right>'], type: 'keyToKey', toKeys: ['l'] },
+    { keys: ['<Up>'], type: 'keyToKey', toKeys: ['k'] },
+    { keys: ['<Down>'], type: 'keyToKey', toKeys: ['j'] },
+    { keys: ['<Space>'], type: 'keyToKey', toKeys: ['l'] },
+    { keys: ['<BS>'], type: 'keyToKey', toKeys: ['h'] },
+    { keys: ['<C-Space>'], type: 'keyToKey', toKeys: ['W'] },
+    { keys: ['<C-BS>'], type: 'keyToKey', toKeys: ['B'] },
+    { keys: ['<S-Space>'], type: 'keyToKey', toKeys: ['w'] },
+    { keys: ['<S-BS>'], type: 'keyToKey', toKeys: ['b'] },
+    { keys: ['<C-n>'], type: 'keyToKey', toKeys: ['j'] },
+    { keys: ['<C-p>'], type: 'keyToKey', toKeys: ['k'] },
+    { keys: ['C-['], type: 'keyToKey', toKeys: ['<Esc>'] },
+    { keys: ['<C-c>'], type: 'keyToKey', toKeys: ['<Esc>'] },
     { keys: ['s'], type: 'keyToKey', toKeys: ['c', 'l'] },
     { keys: ['S'], type: 'keyToKey', toKeys: ['c', 'c'] },
-    { keys: ['Home'], type: 'keyToKey', toKeys: ['0'] },
-    { keys: ['End'], type: 'keyToKey', toKeys: ['$'] },
-    { keys: ['PageUp'], type: 'keyToKey', toKeys: ['Ctrl-b'] },
-    { keys: ['PageDown'], type: 'keyToKey', toKeys: ['Ctrl-f'] },
+    { keys: ['<Home>'], type: 'keyToKey', toKeys: ['0'] },
+    { keys: ['<End>'], type: 'keyToKey', toKeys: ['$'] },
+    { keys: ['<PageUp>'], type: 'keyToKey', toKeys: ['<C-b>'] },
+    { keys: ['<PageDown>'], type: 'keyToKey', toKeys: ['<C-f>'] },
     // Motions
     { keys: ['H'], type: 'motion',
         motion: 'moveToTopLine',
@@ -136,14 +136,14 @@
         motionArgs: { forward: false, toJumplist: true }},
     { keys: ['}'], type: 'motion', motion: 'moveByParagraph',
         motionArgs: { forward: true, toJumplist: true }},
-    { keys: ['Ctrl-f'], type: 'motion',
+    { keys: ['<C-f>'], type: 'motion',
         motion: 'moveByPage', motionArgs: { forward: true }},
-    { keys: ['Ctrl-b'], type: 'motion',
+    { keys: ['<C-b>'], type: 'motion',
         motion: 'moveByPage', motionArgs: { forward: false }},
-    { keys: ['Ctrl-d'], type: 'motion',
+    { keys: ['<C-d>'], type: 'motion',
         motion: 'moveByScroll',
         motionArgs: { forward: true, explicitRepeat: true }},
-    { keys: ['Ctrl-u'], type: 'motion',
+    { keys: ['<C-u>'], type: 'motion',
         motion: 'moveByScroll',
         motionArgs: { forward: false, explicitRepeat: true }},
     { keys: ['g', 'g'], type: 'motion',
@@ -237,9 +237,9 @@
     { keys: ['~'], type: 'operatorMotion', operator: 'swapcase',
         motion: 'moveByCharacters', motionArgs: { forward: true }},
     // Actions
-    { keys: ['Ctrl-i'], type: 'action', action: 'jumpListWalk',
+    { keys: ['<C-i>'], type: 'action', action: 'jumpListWalk',
         actionArgs: { forward: true }},
-    { keys: ['Ctrl-o'], type: 'action', action: 'jumpListWalk',
+    { keys: ['<C-o>'], type: 'action', action: 'jumpListWalk',
         actionArgs: { forward: false }},
     { keys: ['a'], type: 'action', action: 'enterInsertMode',
         actionArgs: { insertAt: 'charAfter' }},
@@ -262,9 +262,11 @@
     { keys: ['P'], type: 'action', action: 'paste',
         actionArgs: { after: false }},
     { keys: ['r', 'character'], type: 'action', action: 'replace' },
+    { keys: ['@', 'character'], type: 'action', action: 'replayMacro' },
+    { keys: ['q', 'character'], type: 'action', action: 'enterMacroRecordMode' },
     { keys: ['R'], type: 'action', action: 'enterReplaceMode' },
     { keys: ['u'], type: 'action', action: 'undo' },
-    { keys: ['Ctrl-r'], type: 'action', action: 'redo' },
+    { keys: ['<C-r>'], type: 'action', action: 'redo' },
     { keys: ['m', 'character'], type: 'action', action: 'setMark' },
     { keys: ['\"', 'character'], type: 'action', action: 'setRegister' },
     { keys: ['z', 'z'], type: 'action', action: 'scrollToCursor',
@@ -274,7 +276,7 @@
         motion: 'moveToFirstNonWhiteSpaceCharacter' },
     { keys: ['z', 't'], type: 'action', action: 'scrollToCursor',
         actionArgs: { position: 'top' }},
-    { keys: ['z', 'Enter'], type: 'action', action: 'scrollToCursor',
+    { keys: ['z', '<CR>'], type: 'action', action: 'scrollToCursor',
         actionArgs: { position: 'top' },
         motion: 'moveToFirstNonWhiteSpaceCharacter' },
     { keys: ['z', '-'], type: 'action', action: 'scrollToCursor',
@@ -283,9 +285,9 @@
         actionArgs: { position: 'bottom' },
         motion: 'moveToFirstNonWhiteSpaceCharacter' },
     { keys: ['.'], type: 'action', action: 'repeatLastEdit' },
-    { keys: ['Ctrl-a'], type: 'action', action: 'incrementNumberToken',
+    { keys: ['<C-a>'], type: 'action', action: 'incrementNumberToken',
         actionArgs: {increase: true, backtrack: false}},
-    { keys: ['Ctrl-x'], type: 'action', action: 'incrementNumberToken',
+    { keys: ['<C-x>'], type: 'action', action: 'incrementNumberToken',
         actionArgs: {increase: false, backtrack: false}},
     // Text object motions
     { keys: ['a', 'character'], type: 'motion',
@@ -411,7 +413,7 @@
         }
         var mark = buffer[(size + pointer) % size];
         // skip marks that are temporarily removed from text buffer
-        if (!mark.find()) {
+        if (mark && !mark.find()) {
           var inc = offset > 0 ? 1 : -1;
           var newCur;
           var oldCur = cm.getCursor();
@@ -434,6 +436,26 @@
         move: move
       };
     };
+
+    var createMacroState = function() {
+      return {
+        macroKeyBuffer: [],
+        latestRegister: undefined,
+        enteredMacroMode: undefined,
+        isMacroPlaying: false,
+        toggle: function(cm, registerName) {
+          if (this.enteredMacroMode) { //onExit
+            this.enteredMacroMode(); // close dialog
+            this.enteredMacroMode = undefined;
+          } else { //onEnter
+            this.latestRegister = registerName;
+            this.enteredMacroMode = cm.openDialog(
+              '(recording)['+registerName+']', null, {bottom:true});
+          }
+        }
+      }
+    }
+
     // Global Vim state. Call getVimGlobalState to get and initialize.
     var vimGlobalState;
     function getVimGlobalState() {
@@ -444,6 +466,7 @@
           // Whether we are searching backwards.
           searchIsReversed: false,
           jumpList: createCircularJumpList(),
+          macroModeState: createMacroState(),
           // Recording latest f, t, F or T motion command.
           lastChararacterSearch: {increment:0, forward:true, selectedCharacter:''},
           registerController: new RegisterController({})
@@ -509,7 +532,15 @@
       handleKey: function(cm, key) {
         var command;
         var vim = getVimState(cm);
-        if (key == 'Esc') {
+        var macroModeState = getVimGlobalState().macroModeState;
+        if (macroModeState.enteredMacroMode) {
+          if (key == 'q') {
+            actions.exitMacroRecordMode();
+            return;
+          }
+          logKey(macroModeState, key);
+        }
+        if (key == '<Esc>') {
           // Clear input state and get back to normal mode.
           vim.inputState = new InputState();
           if (vim.visualMode) {
@@ -671,6 +702,9 @@
           this.unamedRegister.set(text, linewise);
         }
       },
+      setRegisterText: function(name, text, linewise) {
+        this.getRegister(name).set(text, linewise);
+      },
       // Gets the register named @name.  If one of @name doesn't already exist,
       // create it.  If @name is invalid, return the unamedRegister.
       getRegister: function(name) {
@@ -717,10 +751,10 @@
                 inputState.selectedCharacter = keys[keys.length - 1];
                 if(inputState.selectedCharacter.length>1){
                   switch(inputState.selectedCharacter){
-                    case "Enter":
+                    case "<CR>":
                       inputState.selectedCharacter='\n';
                       break;
-                    case "Space":
+                    case "<Space>":
                       inputState.selectedCharacter=' ';
                       break;
                     default:
@@ -1504,22 +1538,43 @@
       },
       scrollToCursor: function(cm, actionArgs) {
         var lineNum = cm.getCursor().line;
-        var heightProp = window.getComputedStyle(cm.getScrollerElement()).
-            getPropertyValue('height');
-        var height = parseInt(heightProp);
-        var y = cm.charCoords({line: lineNum, ch: 0}, "local").top;
-        var halfHeight = parseInt(height) / 2;
+        var charCoords = cm.charCoords({line: lineNum, ch: 0}, "local");
+        var height = cm.getScrollInfo().clientHeight;
+        var y = charCoords.top;
+        var lineHeight = charCoords.bottom - y;
         switch (actionArgs.position) {
-          case 'center': y = y - (height / 2) + 10;
-              break;
-          case 'bottom': y = y - height;
-              break;
-          case 'top': break;
+          case 'center': y = y - (height / 2) + lineHeight;
+            break;
+          case 'bottom': y = y - height + lineHeight*1.4;
+            break;
+          case 'top': y = y + lineHeight*0.4;
+            break;
         }
         cm.scrollTo(null, y);
-        // The calculations are slightly off, use scrollIntoView to nudge the
-        // view into the right place.
-        cm.scrollIntoView();
+      },
+      replayMacro: function(cm, actionArgs) {
+        var registerName = actionArgs.selectedCharacter;
+        var repeat = actionArgs.repeat;
+        var macroModeState = getVimGlobalState().macroModeState;
+        if (registerName == '@') {
+          registerName = macroModeState.latestRegister;
+        }
+        var keyBuffer = parseRegisterToKeyBuffer(macroModeState, registerName);
+        while(repeat--){
+          executeMacroKeyBuffer(cm, macroModeState, keyBuffer);
+        }
+      },
+      exitMacroRecordMode: function(cm, actionArgs) {
+        var macroModeState = getVimGlobalState().macroModeState;
+        macroModeState.toggle();
+        parseKeyBufferToRegister(macroModeState.latestRegister,
+                                 macroModeState.macroKeyBuffer);
+      },
+      enterMacroRecordMode: function(cm, actionArgs) {
+        var macroModeState = getVimGlobalState().macroModeState;
+        var registerName = actionArgs.selectedCharacter;
+        macroModeState.toggle(cm, registerName);
+        emptyMacroKeyBuffer(macroModeState);
       },
       enterInsertMode: function(cm, actionArgs) {
         var insertAt = (actionArgs) ? actionArgs.insertAt : null;
@@ -2930,41 +2985,14 @@
     // Converts a key string sequence of the form a<C-w>bd<Left> into Vim's
     // keymap representation.
     function parseKeyString(str) {
-      var idx = 0;
+      var key, match;
       var keys = [];
-      while (idx < str.length) {
-        if (str.charAt(idx) != '<') {
-          keys.push(str.charAt(idx));
-          idx++;
-          continue;
-        }
-        // Vim key notation here means desktop Vim key-notation.
-        // See :help key-notation in desktop Vim.
-        var vimKeyNotationStart = ++idx;
-        while (str.charAt(idx++) != '>') {}
-        var vimKeyNotation = str.substring(vimKeyNotationStart, idx - 1);
-        var mod='';
-        var match = (/^C-(.+)$/).exec(vimKeyNotation);
-        if (match) {
-          mod='Ctrl-';
-          vimKeyNotation=match[1];
-        }
-        var key;
-        switch (vimKeyNotation) {
-          case 'BS':
-            key = 'Backspace';
-            break;
-          case 'CR':
-            key = 'Enter';
-            break;
-          case 'Del':
-            key = 'Delete';
-            break;
-          default:
-            key = vimKeyNotation;
-            break;
-        }
-        keys.push(mod + key);
+      while (str) {
+        match = (/<\w+-.+?>|<\w+>|./).exec(str);
+        if(match === null)break;
+        key = match[0];
+        str = str.substring(match.index + key.length);
+        keys.push(key);
       }
       return keys;
     }
@@ -3135,33 +3163,37 @@
        * modifers.
        */
       // TODO: Figure out a way to catch capslock.
-      function handleKeyEvent_(cm, key, modifier) {
-        if (isUpperCase(key)) {
+      function cmKeyToVimKey(key, modifier) {
+        var vimKey = key;
+        if (isUpperCase(vimKey)) {
           // Convert to lower case if shift is not the modifier since the key
           // we get from CodeMirror is always upper case.
           if (modifier == 'Shift') {
             modifier = null;
           }
           else {
-            key = key.toLowerCase();
+            vimKey = vimKey.toLowerCase();
           }
         }
         if (modifier) {
           // Vim will parse modifier+key combination as a single key.
-          key = modifier + '-' + key;
+          vimKey = modifier.charAt(0) + '-' + vimKey;
         }
-        vim.handleKey(cm, key);
+        var specialKey = ({Enter:'CR',Backspace:'BS',Delete:'Del'})[vimKey];
+        vimKey = specialKey ? specialKey : vimKey;
+        vimKey = vimKey.length > 1 ? '<'+ vimKey + '>' : vimKey;
+        return vimKey;
       }
 
       // Closure to bind CodeMirror, key, modifier.
-      function keyMapper(key, modifier) {
+      function keyMapper(vimKey) {
         return function(cm) {
-          handleKeyEvent_(cm, key, modifier);
+          vim.handleKey(cm, vimKey);
         };
       }
 
       var modifiers = ['Shift', 'Ctrl'];
-      var keyMap = {
+      var cmToVimKeymap = {
         'nofallthrough': true,
         'style': 'fat-cursor'
       };
@@ -3173,11 +3205,9 @@
             // them.
             key = "'" + key + "'";
           }
-          if (modifier) {
-            keyMap[modifier + '-' + key] = keyMapper(keys[i], modifier);
-          } else {
-            keyMap[key] = keyMapper(keys[i]);
-          }
+          var vimKey = cmKeyToVimKey(keys[i], modifier);
+          var cmKey = modifier ? modifier + '-' + key : key;
+          cmToVimKeymap[cmKey] = keyMapper(vimKey);
         }
       }
       bindKeys(upperCaseAlphabet);
@@ -3189,7 +3219,7 @@
       bindKeys(numbers, 'Ctrl');
       bindKeys(specialKeys);
       bindKeys(specialKeys, 'Ctrl');
-      return keyMap;
+      return cmToVimKeymap;
     }
     CodeMirror.keyMap.vim = buildVimKeyMap();
 
@@ -3213,6 +3243,47 @@
       },
       fallthrough: ['default']
     };
+
+    function parseRegisterToKeyBuffer(macroModeState, registerName) {
+      var match, key;
+      var register = getVimGlobalState().registerController.getRegister(registerName);
+      var text = register.toString();
+      var macroKeyBuffer = macroModeState.macroKeyBuffer;
+      emptyMacroKeyBuffer(macroModeState);
+      do {
+        match = text.match(/<\w+-.+>|<\w+>|.|\n/);
+        if(match === null)break;
+        key = match[0];
+        text = text.substring(match.index + key.length);
+        macroKeyBuffer.push(key);
+      } while (text);
+      return macroKeyBuffer;
+    }
+
+    function parseKeyBufferToRegister(registerName, keyBuffer) {
+      var text = keyBuffer.join('');
+      getVimGlobalState().registerController.setRegisterText(registerName, text);
+    }
+
+    function emptyMacroKeyBuffer(macroModeState) {
+      if(macroModeState.isMacroPlaying)return;
+      var macroKeyBuffer = macroModeState.macroKeyBuffer;
+      macroKeyBuffer.length = 0;
+    }
+
+    function executeMacroKeyBuffer(cm, macroModeState, keyBuffer) {
+      macroModeState.isMacroPlaying = true;
+      for (var i = 0, len = keyBuffer.length; i < len; i++) {
+        CodeMirror.Vim.handleKey(cm, keyBuffer[i]);
+      };
+      macroModeState.isMacroPlaying = false;
+    }
+
+    function logKey(macroModeState, key) {
+      if(macroModeState.isMacroPlaying)return;
+      var macroKeyBuffer = macroModeState.macroKeyBuffer;
+      macroKeyBuffer.push(key);
+    }
 
     function exitReplaceMode(cm) {
       cm.toggleOverwrite();
