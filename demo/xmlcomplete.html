@@ -25,6 +25,10 @@
     guides completion. The schema can be customized—see
     the <a href="../doc/manual.html#addon_xml-hint">manual</a>.</p>
 
+    <p>Development of the <code>xml-hint</code> addon was kindly
+    sponsored
+    by <a href="http://www.xperiment.mobi">www.xperiment.mobi</a>.</p>
+
     <script>
       var dummy = {
         attrs: {
@@ -59,14 +63,11 @@
         leaves: dummy, stem: dummy, flowers: dummy
       };
 
-      CodeMirror.commands.autocomplete = function(cm) {
-        CodeMirror.showHint(cm, CodeMirror.xmlHint, {schemaInfo: tags});
-      }
-
       function completeAfter(cm, pred) {
         var cur = cm.getCursor();
         if (!pred || pred()) setTimeout(function() {
-          if (!cm.state.completionActive) cm.execCommand("autocomplete");
+          if (!cm.state.completionActive)
+            CodeMirror.showHint(cm, CodeMirror.xmlHint, {schemaInfo: tags, completeSingle: false});
         }, 100);
         return CodeMirror.Pass;
       }
@@ -81,6 +82,7 @@
       function completeIfInTag(cm) {
         return completeAfter(cm, function() {
           var tok = cm.getTokenAt(cm.getCursor());
+          if (tok.type == "string" && (!/['"]/.test(tok.string.charAt(tok.string.length - 1)) || tok.string.length == 1)) return false;
           var inner = CodeMirror.innerMode(cm.getMode(), tok.state).state;
           return inner.tagName;
         });
@@ -94,7 +96,9 @@
           "'/'": completeIfAfterLt,
           "' '": completeIfInTag,
           "'='": completeIfInTag,
-          "Ctrl-Space": "autocomplete"
+          "Ctrl-Space": function(cm) {
+            CodeMirror.showHint(cm, CodeMirror.xmlHint, {schemaInfo: tags});
+          }
         }
       });
     </script>
