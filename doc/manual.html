@@ -1407,6 +1407,14 @@
       edits were recently made and highlighting has not yet completed.
       </dd>
 
+      <dt id="getTokenTypeAt"><code><strong>cm.getTokenTypeAt</strong>(pos: {line, ch}) → string</code></dt>
+      <dd>This is a (much) cheaper version
+      of <a href="#getTokenAt"><code>getTokenAt</code></a> useful for
+      when you just need the type of the token at a given position,
+      and no other information. Will return <code>null</code> for
+      unstyled tokens, and a string, potentially containing multiple
+      space-separated style names, otherwise.</dd>
+
       <dt id="getStateAfter"><code><strong>cm.getStateAfter</strong>(?line: integer, ?precise: boolean) → object</code></dt>
       <dd>Returns the mode's parser state, if any, at the end of the
       given line number. If no line number is given, the state at the
@@ -1949,6 +1957,20 @@
       Also gives the editor a <code>CodeMirror-empty</code> CSS class
       whenever it doesn't contain any text.
       See <a href="../demo/placeholder.html">the demo</a>.</dd>
+
+      <dt id="addon_merge"><a href="../addon/merge/merge.js"><code>merge/merge.js</code></a></dt>
+      <dd>Implements an interface for merging changes, using either a
+      2-way or a 3-way view. The <code>CodeMirror.MergeView</code>
+      constructor takes arguments similar to
+      the <a href="#CodeMirror"><code>CodeMirror</code></a>
+      constructor, first a node to append the interface to, and then
+      an options object. Two extra optional options are
+      recognized, <code>origLeft</code> and <code>origRight</code>,
+      which may be strings that provide original versions of the
+      document, which will be shown to the left and right of the
+      editor in non-editable CodeMirror instances. The merge interface
+      will highlight changes between the editable document and the
+      original(s) (<a href="../demo/merge.html">demo</a>).</dd>
     </dl>
 
     <h2 id="modeapi">Writing CodeMirror Modes</h2>
