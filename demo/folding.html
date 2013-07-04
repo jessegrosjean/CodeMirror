@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="../lib/codemirror.css">
     <script src="../lib/codemirror.js"></script>
     <script src="../addon/fold/foldcode.js"></script>
+    <script src="../addon/fold/foldgutter.js"></script>
     <script src="../addon/fold/brace-fold.js"></script>
     <script src="../addon/fold/xml-fold.js"></script>
     <script src="../mode/javascript/javascript.js"></script>
@@ -21,11 +22,33 @@
         line-height: .3;
         cursor: pointer;
       }
+      .CodeMirror-foldgutter {
+        width: .7em;
+      }
+      .CodeMirror-foldgutter-open,
+      .CodeMirror-foldgutter-folded {
+        color: #555;
+        cursor: pointer;
+      }
+      .CodeMirror-foldgutter-open:after {
+        content: "\25BE";
+      }
+      .CodeMirror-foldgutter-folded:after {
+        content: "\25B8";
+      }
     </style>
   </head>
   <body>
     <h1>CodeMirror: Code Folding Demo</h1>
 
+<<<<<<< HEAD
+=======
+    <p>Demonstration of code folding using the code
+    in <a href="../doc/manual.html#addon_foldcode"><code>foldcode.js</code></a>
+    and <a href="../doc/manual.html#addon_foldgutter"><code>foldgutter.js</code></a>.
+    Press ctrl-q or click on the gutter markers to fold a block, again
+    to unfold.</p>
+>>>>>>> b2b6b54b6e4617acc46a36cb1d924712c03f5237
     <form>
       <div style="max-width: 50em">HTML:<br><textarea id="code-html" name="code-html"></textarea></div>
     </form>
@@ -35,6 +58,7 @@ window.onload = function() {
   var te_html = document.getElementById("code-html");
   te_html.value = "one\n\ntwo\n\nthree";
 
+<<<<<<< HEAD
   window.cm = CodeMirror.fromTextArea(te_html, {
     mode: "text/html",
     lineNumbers: true,
@@ -62,6 +86,28 @@ window.onload = function() {
     collapsed: true,
     replacedWith: makeWidget()
   });
+=======
+  window.editor = CodeMirror.fromTextArea(te, {
+    mode: "javascript",
+    lineNumbers: true,
+    lineWrapping: true,
+    extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+  });
+  editor.foldCode(CodeMirror.Pos(8, 0));
+
+  window.editor_html = CodeMirror.fromTextArea(te_html, {
+    mode: "text/html",
+    lineNumbers: true,
+    lineWrapping: true,
+    extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+  });
+  editor_html.foldCode(CodeMirror.Pos(13, 0));
+  editor_html.foldCode(CodeMirror.Pos(1, 0));
+>>>>>>> b2b6b54b6e4617acc46a36cb1d924712c03f5237
 };
 
 </script>
