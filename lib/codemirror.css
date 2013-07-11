@@ -212,6 +212,11 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 .CodeMirror-widget {
 }
 
+.CodeMirror-overlaywidget {
+  position: absolute;
+  z-index: 2;
+}
+
 .CodeMirror-wrap .CodeMirror-scroll {
   overflow-x: hidden;
 }
