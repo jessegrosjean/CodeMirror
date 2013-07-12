@@ -214,6 +214,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 
 .CodeMirror-overlaywidget {
   position: absolute;
+  width: 100%;
   z-index: 2;
 }
 
