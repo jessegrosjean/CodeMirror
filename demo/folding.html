@@ -13,6 +13,7 @@
     <script src="../mode/xml/xml.js"></script>
     <link rel="stylesheet" href="../doc/docs.css">
 
+<<<<<<< HEAD
     <style type="text/css">
       .CodeMirror {border-top: 1px solid black; border-bottom: 1px solid black;}
       .CodeMirror-foldmarker {
@@ -40,6 +41,37 @@
   </head>
   <body>
     <h1>CodeMirror: Code Folding Demo</h1>
+=======
+<title>CodeMirror: Code Folding Demo</title>
+<meta charset="utf-8"/>
+<link rel=stylesheet href="../doc/docs.css">
+
+<link rel="stylesheet" href="../lib/codemirror.css">
+<link rel="stylesheet" href="../addon/fold/foldgutter.css" />
+<script src="../lib/codemirror.js"></script>
+<script src="../addon/fold/foldcode.js"></script>
+<script src="../addon/fold/foldgutter.js"></script>
+<script src="../addon/fold/brace-fold.js"></script>
+<script src="../addon/fold/xml-fold.js"></script>
+<script src="../addon/fold/comment-fold.js"></script>
+<script src="../mode/javascript/javascript.js"></script>
+<script src="../mode/xml/xml.js"></script>
+<style type="text/css">
+      .CodeMirror {border-top: 1px solid black; border-bottom: 1px solid black;}
+</style>
+<div id=nav>
+  <a href="http://codemirror.net"><img id=logo src="../doc/logo.png"></a>
+
+  <ul>
+    <li><a href="../index.html">Home</a>
+    <li><a href="../doc/manual.html">Manual</a>
+    <li><a href="https://github.com/marijnh/codemirror">Code</a>
+  </ul>
+  <ul>
+    <li><a class=active href="#">Code Folding</a>
+  </ul>
+</div>
+>>>>>>> acb16d4be0aba6edf51b97c413cd66a4e248c9e1
 
 <<<<<<< HEAD
 =======
@@ -53,7 +85,13 @@
       <div style="max-width: 50em">HTML:<br><textarea id="code-html" name="code-html"></textarea></div>
     </form>
     <script id="script">
+<<<<<<< HEAD
 
+=======
+/*
+ * Demonstration of code folding
+ */
+>>>>>>> acb16d4be0aba6edf51b97c413cd66a4e248c9e1
 window.onload = function() {
   var te_html = document.getElementById("code-html");
   te_html.value = "one\n\ntwo\n\nthree";
@@ -92,7 +130,13 @@ window.onload = function() {
     lineNumbers: true,
     lineWrapping: true,
     extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+<<<<<<< HEAD
     foldGutter: true,
+=======
+    foldGutter: {
+    	rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+    },
+>>>>>>> acb16d4be0aba6edf51b97c413cd66a4e248c9e1
     gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
   });
   editor.foldCode(CodeMirror.Pos(8, 0));
