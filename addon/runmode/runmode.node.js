@@ -5,6 +5,7 @@ function splitLines(string){ return string.split(/\r?\n|\r/); };
 function StringStream(string) {
   this.pos = this.start = 0;
   this.string = string;
+  this.lineStart = 0;
 }
 StringStream.prototype = {
   eol: function() {return this.pos >= this.string.length;},
@@ -36,7 +37,7 @@ StringStream.prototype = {
     if (found > -1) {this.pos = found; return true;}
   },
   backUp: function(n) {this.pos -= n;},
-  column: function() {return this.start;},
+  column: function() {return this.start - this.lineStart;},
   indentation: function() {return 0;},
   match: function(pattern, consume, caseInsensitive) {
     if (typeof pattern == "string") {
@@ -53,7 +54,12 @@ StringStream.prototype = {
       return match;
     }
   },
-  current: function(){return this.string.slice(this.start, this.pos);}
+  current: function(){return this.string.slice(this.start, this.pos);},
+  hideFirstChars: function(n, inner) {
+    this.lineStart += n;
+    try { return inner(); }
+    finally { this.lineStart -= n; }
+  }
 };
 exports.StringStream = StringStream;
 
@@ -91,11 +97,11 @@ exports.getMode = function(options, spec) {
   if (!mfactory) throw new Error("Unknown mode: " + spec);
   return mfactory(options, spec);
 };
-CodeMirror.registerHelper = CodeMirror.registerGlobalHelper = Math.min;
+exports.registerHelper = exports.registerGlobalHelper = Math.min;
 
 exports.runMode = function(string, modespec, callback) {
   var mode = exports.getMode({indentUnit: 2}, modespec);
-  var lines = splitLines(string), state = exports.startState(mode);
+  var lines = splitLines(string), state = (options && options.state) || exports.startState(mode);
   for (var i = 0, e = lines.length; i < e; ++i) {
     if (i) callback("\n");
     var stream = new exports.StringStream(lines[i]);

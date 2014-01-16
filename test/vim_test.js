@@ -195,7 +195,7 @@ function testVim(name, run, opts, expectedFail) {
       run(cm, vim, helpers);
       successful = true;
     } finally {
-      if ((debug && !successful) || verbose) {
+      if (!successful || verbose) {
         place.style.visibility = "visible";
       } else {
         place.removeChild(cm.getWrapperElement());
@@ -2003,6 +2003,33 @@ testVim('zt==z<CR>', function(cm, vim, helpers){
   eq(zVals[2], zVals[5]);
 });
 
+var scrollMotionSandbox =
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n';
+testVim('scrollMotion', function(cm, vim, helpers){
+  var prevCursor, prevScrollInfo;
+  cm.setCursor(0, 0);
+  // ctrl-y at the top of the file should have no effect.
+  helpers.doKeys('<C-y>');
+  eq(0, cm.getCursor().line);
+  prevScrollInfo = cm.getScrollInfo();
+  helpers.doKeys('<C-e>');
+  eq(1, cm.getCursor().line);
+  eq(true, prevScrollInfo.top < cm.getScrollInfo().top);
+  // Jump to the end of the sandbox.
+  cm.setCursor(1000, 0);
+  prevCursor = cm.getCursor();
+  // ctrl-e at the bottom of the file should have no effect.
+  helpers.doKeys('<C-e>');
+  eq(prevCursor.line, cm.getCursor().line);
+  prevScrollInfo = cm.getScrollInfo();
+  helpers.doKeys('<C-y>');
+  eq(prevCursor.line - 1, cm.getCursor().line);
+  eq(true, prevScrollInfo.top > cm.getScrollInfo().top);
+}, { value: scrollMotionSandbox});
+
 var squareBracketMotionSandbox = ''+
   '({\n'+//0
   '  ({\n'+//11
@@ -2374,6 +2401,26 @@ testVim('ex_map_key2ex', function(cm, vim, helpers) {
   eq(written, true);
   eq(actualCm, cm);
 });
+testVim('ex_map_key2key_visual_api', function(cm, vim, helpers) {
+  CodeMirror.Vim.map('b', ':w', 'visual');
+  var tmp = CodeMirror.commands.save;
+  var written = false;
+  var actualCm;
+  CodeMirror.commands.save = function(cm) {
+    written = true;
+    actualCm = cm;
+  };
+  // Mapping should not work in normal mode.
+  helpers.doKeys('b');
+  eq(written, false);
+  // Mapping should work in visual mode.
+  helpers.doKeys('v', 'b');
+  eq(written, true);
+  eq(actualCm, cm);
+
+  CodeMirror.commands.save = tmp;
+});
+
 // Testing registration of functions as ex-commands and mapping to <Key>-keys
 testVim('ex_api_test', function(cm, vim, helpers) {
   var res=false;

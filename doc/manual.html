@@ -402,6 +402,13 @@
       document looks. You can set this option to false to disable this
       behavior.</dd>
 
+      <dt id="option_addModeClass"><code><strong>addModeClass</strong>: boolean</code></dt>
+      <dd>When enabled (off by default), an extra CSS class will be
+      added to each token, indicating the
+      (<a href="#innerMode">inner</a>) mode that produced it, prefixed
+      with <code>"cm-m-"</code>. For example, tokens from the XML mode
+      will get the <code>cm-m-xml</code> class.</dd>
+
       <dt id="option_maxHighlightLength"><code><strong>maxHighlightLength</strong>: number</code></dt>
       <dd>When highlighting long lines, in order to stay responsive,
       the editor will give up and simply style the rest of the line as
@@ -935,10 +942,14 @@
       of <a href="#changeGeneration"><code>changeGeneration</code></a>,
       which allows multiple subsystems to track different notions of
       cleanness without interfering.</dd>
-      <dt id="changeGeneration"><code><strong>doc.changeGeneration</strong>() → integer</code></dt>
+      <dt id="changeGeneration"><code><strong>doc.changeGeneration</strong>(?closeEvent: boolean) → integer</code></dt>
       <dd>Returns a number that can later be passed
       to <a href="#isClean"><code>isClean</code></a> to test whether
-      any edits were made (and not undone) in the meantime.</dd>
+      any edits were made (and not undone) in the meantime.
+      If <code>closeEvent</code> is true, the current history event
+      will be ‘closed’, meaning it can't be combined with further
+      changes (rapid typing or deleting events are typically
+      combined).</dd>
       <dt id="isClean"><code><strong>doc.isClean</strong>(?generation: integer) → boolean</code></dt>
       <dd>Returns whether the document is currently clean — not
       modified since initialization or the last call

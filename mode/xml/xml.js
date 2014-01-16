@@ -171,15 +171,13 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
     };
   }
 
-  function pushContext(state, tagName, startOfLine) {
-    var noIndent = Kludges.doNotIndent.hasOwnProperty(tagName) || (state.context && state.context.noIndent);
-    state.context = {
-      prev: state.context,
-      tagName: tagName,
-      indent: state.indented,
-      startOfLine: startOfLine,
-      noIndent: noIndent
-    };
+  function Context(state, tagName, startOfLine) {
+    this.prev = state.context;
+    this.tagName = tagName;
+    this.indent = state.indented;
+    this.startOfLine = startOfLine;
+    if (Kludges.doNotIndent.hasOwnProperty(tagName) || (state.context && state.context.noIndent))
+      this.noIndent = true;
   }
   function popContext(state) {
     if (state.context) state.context = state.context.prev;
@@ -234,7 +232,7 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
     return closeState(type, stream, state);
   }
 
-  function attrState(type, stream, state) {
+  function attrState(type, _stream, state) {
     if (type == "word") {
       setStyle = "attribute";
       return attrEqState;
@@ -246,7 +244,7 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
         maybePopContext(state, tagName.toLowerCase());
       } else {
         maybePopContext(state, tagName.toLowerCase());
-        pushContext(state, tagName, tagStart == stream.indentation());
+        state.context = new Context(state, tagName, tagStart == state.indented);
       }
       return baseState;
     }
@@ -256,7 +254,6 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
   function attrEqState(type, stream, state) {
     if (type == "equals") return attrValueState;
     if (!Kludges.allowMissing) setStyle = "error";
-    else if (type == "word") { setStyle = "attribute"; return attrState; }
     return attrState(type, stream, state);
   }
   function attrValueState(type, stream, state) {
@@ -275,16 +272,14 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
       return {tokenize: inText,
               state: baseState,
               indented: 0,
-              startOfLine: true,
               tagName: null, tagStart: null,
               context: null};
     },
 
     token: function(stream, state) {
-      if (!state.tagName && stream.sol()) {
-        state.startOfLine = true;
+      if (!state.tagName && stream.sol())
         state.indented = stream.indentation();
-      }
+
       if (stream.eatSpace()) return null;
       tagName = type = null;
       var style = state.tokenize(stream, state);
@@ -294,7 +289,6 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
         if (setStyle)
           style = setStyle == "error" ? style + " error" : setStyle;
       }
-      state.startOfLine = false;
       return style;
     },
 
@@ -304,8 +298,8 @@ CodeMirror.defineMode("xml", function(config, parserConfig) {
       if (state.tokenize.isInAttribute) {
         return state.stringStartCol + 1;
       }
-      if ((state.tokenize != inTag && state.tokenize != inText) ||
-          context && context.noIndent)
+      if (context && context.noIndent) return CodeMirror.Pass;
+      if (state.tokenize != inTag && state.tokenize != inText)
         return fullLine ? fullLine.match(/^(\s*)/)[0].length : 0;
       // Indent the starts of attribute names.
       if (state.tagName) {

@@ -47,6 +47,11 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
   if (modeCfg.highlightFormatting === undefined)
     modeCfg.highlightFormatting = false;
 
+  // Maximum number of nested blockquotes. Set to 0 for infinite nesting.
+  // Excess `>` will emit `error` token.
+  if (modeCfg.maxBlockquoteDepth === undefined)
+    modeCfg.maxBlockquoteDepth = 0;
+
   // Should underscores in words open/close em/strong?
   if (modeCfg.underscoresBreakWords === undefined)
     modeCfg.underscoresBreakWords = true;
@@ -61,8 +66,7 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
 
   var header   = 'header'
   ,   code     = 'comment'
-  ,   quote1   = 'atom'
-  ,   quote2   = 'number'
+  ,   quote    = 'quote'
   ,   list1    = 'variable-2'
   ,   list2    = 'variable-3'
   ,   list3    = 'keyword'
@@ -120,6 +124,8 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
 
   function blockNormal(stream, state) {
 
+    var sol = stream.sol();
+
     var prevLineIsList = (state.list !== false);
     if (state.list !== false && state.indentationDiff >= 0) { // Continued list
       if (state.indentationDiff < 4) { // Only adjust indentation if *not* a code block
@@ -153,19 +159,22 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
       return getType(state);
     } else if (stream.eat('>')) {
       state.indentation++;
-      state.quote = 1;
+      state.quote = sol ? 1 : state.quote + 1;
       if (modeCfg.highlightFormatting) state.formatting = "quote";
       stream.eatSpace();
-      while (stream.eat('>')) {
-        stream.eatSpace();
-        state.quote++;
-      }
       return getType(state);
     } else if (stream.peek() === '[') {
       return switchInline(stream, state, footnoteLink);
     } else if (stream.match(hrRE, true)) {
       return hr;
-    } else if ((!state.prevLineHasContent || prevLineIsList) && (stream.match(ulRE, true) || stream.match(olRE, true))) {
+    } else if ((!state.prevLineHasContent || prevLineIsList) && (stream.match(ulRE, false) || stream.match(olRE, false))) {
+      var listType = null;
+      if (stream.match(ulRE, true)) {
+        listType = 'ul';
+      } else {
+        stream.match(olRE, true);
+        listType = 'ol';
+      }
       state.indentation += 4;
       state.list = true;
       state.listDepth++;
@@ -173,7 +182,7 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
         state.taskList = true;
       }
       state.f = state.inline;
-      if (modeCfg.highlightFormatting) state.formatting = "list";
+      if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
       return getType(state);
     } else if (modeCfg.fencedCodeBlocks && stream.match(/^```([\w+#]*)/, true)) {
       // try switching mode
@@ -190,14 +199,11 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
 
   function htmlBlock(stream, state) {
     var style = htmlMode.token(stream, state.htmlState);
-    if (htmlFound && style === 'tag' && state.htmlState.type !== 'openTag' && !state.htmlState.context) {
+    if ((htmlFound && !state.htmlState.tagName && !state.htmlState.context) ||
+        (state.md_inside && stream.current().indexOf(">") > -1)) {
       state.f = inlineNormal;
       state.block = blockNormal;
-    }
-    if (state.md_inside && stream.current().indexOf(">")!=-1) {
-      state.f = inlineNormal;
-      state.block = blockNormal;
-      state.htmlState.context = undefined;
+      state.htmlState = null;
     }
     return style;
   }
@@ -235,6 +241,16 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
         if (state.formatting[i] === "header") {
           styles.push(formatting + "-" + state.formatting[i] + state.header);
         }
+
+        // Add `formatting-quote` and `formatting-quote-#` for blockquotes
+        // Add `error` instead if the maximum blockquote nesting depth is passed
+        if (state.formatting[i] === "quote") {
+          if (!modeCfg.maxBlockquoteDepth || modeCfg.maxBlockquoteDepth >= state.quote) {
+            styles.push(formatting + "-" + state.formatting[i] + "-" + state.quote);
+          } else {
+            styles.push("error");
+          }
+        }
       }
     }
 
@@ -260,7 +276,18 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
     if (state.code) { styles.push(code); }
 
     if (state.header) { styles.push(header); styles.push(header + state.header); }
-    if (state.quote) { styles.push(state.quote % 2 ? quote1 : quote2); }
+
+    if (state.quote) {
+      styles.push(quote);
+
+      // Add `quote-#` where the maximum for `#` is modeCfg.maxBlockquoteDepth
+      if (!modeCfg.maxBlockquoteDepth || modeCfg.maxBlockquoteDepth >= state.quote) {
+        styles.push(quote + "-" + state.quote);
+      } else {
+        styles.push(quote + "-" + modeCfg.maxBlockquoteDepth);
+      }
+    }
+
     if (state.list !== false) {
       var listMod = (state.listDepth - 1) % 3;
       if (!listMod) {
@@ -414,13 +441,14 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
     }
 
     if (ch === '<' && stream.match(/^\w/, false)) {
-      if (stream.string.indexOf(">")!=-1) {
+      if (stream.string.indexOf(">") != -1) {
         var atts = stream.string.substring(1,stream.string.indexOf(">"));
         if (/markdown\s*=\s*('|"){0,1}1('|"){0,1}/.test(atts)) {
           state.md_inside = true;
         }
       }
       stream.backUp(1);
+      state.htmlState = CodeMirror.startState(htmlMode);
       return switchBlock(stream, state, htmlBlock);
     }
 
@@ -594,7 +622,7 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
     return savedInlineRE[endChar];
   }
 
-  return {
+  var mode = {
     startState: function() {
       return {
         f: blockNormal,
@@ -603,7 +631,7 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
         thisLineHasContent: false,
 
         block: blockNormal,
-        htmlState: CodeMirror.startState(htmlMode),
+        htmlState: null,
         indentation: 0,
 
         inline: inlineNormal,
@@ -634,7 +662,7 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
         thisLineHasContent: s.thisLineHasContent,
 
         block: s.block,
-        htmlState: CodeMirror.copyState(htmlMode, s.htmlState),
+        htmlState: s.htmlState && CodeMirror.copyState(htmlMode, s.htmlState),
         indentation: s.indentation,
 
         localMode: s.localMode,
@@ -664,7 +692,12 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
       state.formatting = false;
 
       if (stream.sol()) {
-        if (stream.match(/^\s*$/, true)) {
+        var forceBlankLine = stream.match(/^\s*$/, true) || state.header;
+
+        // Reset state.header
+        state.header = 0;
+
+        if (forceBlankLine) {
           state.prevLineHasContent = false;
           return blankLine(state);
         } else {
@@ -674,9 +707,6 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
 
         // Reset state.escape
         state.escape = false;
-
-        // Reset state.header
-        state.header = 0;
 
         // Reset state.taskList
         state.taskList = false;
@@ -700,11 +730,17 @@ CodeMirror.defineMode("markdown", function(cmCfg, modeCfg) {
       return state.f(stream, state);
     },
 
+    innerMode: function(state) {
+      if (state.block == htmlBlock) return {state: state.htmlState, mode: htmlMode};
+      if (state.localState) return {state: state.localState, mode: state.localMode};
+      return {state: state, mode: mode};
+    },
+
     blankLine: blankLine,
 
     getType: getType
   };
-
+  return mode;
 }, "xml");
 
 CodeMirror.defineMIME("text/x-markdown", "markdown");
