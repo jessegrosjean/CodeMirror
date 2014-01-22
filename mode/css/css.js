@@ -308,6 +308,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     indent: function(state, textAfter) {
       var cx = state.context, ch = textAfter && textAfter.charAt(0);
       var indent = cx.indent;
+      if (cx.type == "prop" && ch == "}") cx = cx.prev;
       if (cx.prev &&
           (ch == "}" && (cx.type == "block" || cx.type == "top" || cx.type == "interpolation" || cx.type == "font_face") ||
            ch == ")" && (cx.type == "parens" || cx.type == "params" || cx.type == "media_parens") ||
@@ -353,10 +354,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   var propertyKeywords_ = [
     "align-content", "align-items", "align-self", "alignment-adjust",
     "alignment-baseline", "anchor-point", "animation", "animation-delay",
-    "animation-direction", "animation-duration", "animation-iteration-count",
-    "animation-name", "animation-play-state", "animation-timing-function",
-    "appearance", "azimuth", "backface-visibility", "background",
-    "background-attachment", "background-clip", "background-color",
+    "animation-direction", "animation-duration", "animation-fill-mode",
+    "animation-iteration-count", "animation-name", "animation-play-state",
+    "animation-timing-function", "appearance", "azimuth", "backface-visibility",
+    "background", "background-attachment", "background-clip", "background-color",
     "background-image", "background-origin", "background-position",
     "background-repeat", "background-size", "baseline-shift", "binding",
     "bleed", "bookmark-label", "bookmark-level", "bookmark-state",
