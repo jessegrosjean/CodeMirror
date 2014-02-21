@@ -267,6 +267,7 @@ testJumplist('jumplist_skip_delted_mark<c-o>',
 testJumplist('jumplist_skip_delted_mark<c-i>',
              ['*', 'n', 'n', 'k', 'd', 'k', '<C-o>', '<C-i>', '<C-i>'],
              [1,0], [0,2]);
+
 /**
  * @param name Name of the test
  * @param keys An array of keys or a string with a single key to simulate.
@@ -997,6 +998,40 @@ testEdit('diW_end_spc', 'foo \tbAr', /A/, 'diW', 'foo \t');
 testEdit('daW_end_spc', 'foo \tbAr', /A/, 'daW', 'foo');
 testEdit('diW_end_punct', 'foo \tbAr.', /A/, 'diW', 'foo \t');
 testEdit('daW_end_punct', 'foo \tbAr.', /A/, 'daW', 'foo');
+// Deleting text objects
+//    Open and close on same line
+testEdit('di(_open_spc', 'foo (bAr) baz', /\(/, 'di(', 'foo () baz');
+testEdit('di)_open_spc', 'foo (bAr) baz', /\(/, 'di)', 'foo () baz');
+testEdit('da(_open_spc', 'foo (bAr) baz', /\(/, 'da(', 'foo  baz');
+testEdit('da)_open_spc', 'foo (bAr) baz', /\(/, 'da)', 'foo  baz');
+
+testEdit('di(_middle_spc', 'foo (bAr) baz', /A/, 'di(', 'foo () baz');
+testEdit('di)_middle_spc', 'foo (bAr) baz', /A/, 'di)', 'foo () baz');
+testEdit('da(_middle_spc', 'foo (bAr) baz', /A/, 'da(', 'foo  baz');
+testEdit('da)_middle_spc', 'foo (bAr) baz', /A/, 'da)', 'foo  baz');
+
+testEdit('di(_close_spc', 'foo (bAr) baz', /\)/, 'di(', 'foo () baz');
+testEdit('di)_close_spc', 'foo (bAr) baz', /\)/, 'di)', 'foo () baz');
+testEdit('da(_close_spc', 'foo (bAr) baz', /\)/, 'da(', 'foo  baz');
+testEdit('da)_close_spc', 'foo (bAr) baz', /\)/, 'da)', 'foo  baz');
+
+//  Open and close on different lines, equally indented
+testEdit('di{_middle_spc', 'a{\n\tbar\n}b', /r/, 'di{', 'a{}b');
+testEdit('di}_middle_spc', 'a{\n\tbar\n}b', /r/, 'di}', 'a{}b');
+testEdit('da{_middle_spc', 'a{\n\tbar\n}b', /r/, 'da{', 'ab');
+testEdit('da}_middle_spc', 'a{\n\tbar\n}b', /r/, 'da}', 'ab');
+
+// open and close on diff lines, open indented less than close
+testEdit('di{_middle_spc', 'a{\n\tbar\n\t}b', /r/, 'di{', 'a{}b');
+testEdit('di}_middle_spc', 'a{\n\tbar\n\t}b', /r/, 'di}', 'a{}b');
+testEdit('da{_middle_spc', 'a{\n\tbar\n\t}b', /r/, 'da{', 'ab');
+testEdit('da}_middle_spc', 'a{\n\tbar\n\t}b', /r/, 'da}', 'ab');
+
+// open and close on diff lines, open indented more than close
+testEdit('di[_middle_spc', 'a\t[\n\tbar\n]b', /r/, 'di[', 'a\t[]b');
+testEdit('di]_middle_spc', 'a\t[\n\tbar\n]b', /r/, 'di]', 'a\t[]b');
+testEdit('da[_middle_spc', 'a\t[\n\tbar\n]b', /r/, 'da[', 'a\tb');
+testEdit('da]_middle_spc', 'a\t[\n\tbar\n]b', /r/, 'da]', 'a\tb');
 
 // Operator-motion tests
 testVim('D', function(cm, vim, helpers) {
@@ -1538,6 +1573,13 @@ testVim('/_case', function(cm, vim, helpers) {
   helpers.doKeys('/');
   helpers.assertCursorAt(1, 6);
 }, { value: 'match nope match \n nope Match' });
+testVim('/_2', function(cm, vim, helpers) {
+  cm.openDialog = helpers.fakeOpenDialog('\\(word\\)\\{2}');
+  helpers.doKeys('/');
+  helpers.assertCursorAt(1, 9);
+  helpers.doKeys('n');
+  helpers.assertCursorAt(2, 1);
+}, { value: 'word\n another wordword\n wordwordword\n' });
 testVim('/_nongreedy', function(cm, vim, helpers) {
   cm.openDialog = helpers.fakeOpenDialog('aa');
   helpers.doKeys('/');
@@ -2041,6 +2083,14 @@ testVim('moveTillCharacter', function(cm, vim, helpers){
   eq('The ox \n', cm.getValue());
   eq(4, cm.getCursor().ch);
 }, { value: moveTillCharacterSandbox});
+testVim('searchForPipe', function(cm, vim, helpers){
+  cm.setCursor(0, 0);
+  // Search for the '|'.
+  cm.openDialog = helpers.fakeOpenDialog('|');
+  helpers.doKeys('/');
+  eq(4, cm.getCursor().ch);
+}, { value: 'this|that'});
+
 
 var scrollMotionSandbox =
   '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
@@ -2290,9 +2340,40 @@ testVim('ex_substitute_visual_range', function(cm, vim, helpers) {
 }, { value: '1\n2\n3\n4\n5' });
 testVim('ex_substitute_capture', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
-  helpers.doEx('s/(\\d+)/$1$1/')
+  // \n should be a backreference.
+  helpers.doEx('s/\\(\\d+\\)/\\1\\1/')
   eq('a1111 a1212 a1313', cm.getValue());
 }, { value: 'a11 a12 a13' });
+testVim('ex_substitute_capture2', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  // \n should be a backreference, even if followed by '$'
+  helpers.doEx('s/\\(\\d+\\)/$\\1\\1/')
+  eq('a $00 b', cm.getValue());
+}, { value: 'a 0 b' });
+testVim('ex_substitute_javascript', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  // Throw all the things that javascript likes to treat as special values
+  // into the replace part. All should be literal (this is VIM).
+  helpers.doEx('s/\\(\\d+\\)/$$ $\' $` $& \\1/')
+  eq('a $$ $\' $` $& 0 b', cm.getValue());
+}, { value: 'a 0 b' });
+testVim('ex_substitute_nocapture', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  // $n should be literal, since that is the javascript form, not VIM.
+  helpers.doEx('s/\\(\\d+\\)/$1$1/')
+  eq('a$1$1 a$1$1 a$1$1', cm.getValue());
+}, { value: 'a11 a12 a13' });
+testVim('ex_substitute_nocapture2', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  // \$n should be literal, since that is the javascript form, not VIM. 
+  helpers.doEx('s/\\(\\d+\\)/\\$1\\1/')
+  eq('a $10 b', cm.getValue());
+}, { value: 'a 0 b' });
+testVim('ex_substitute_nocapture', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  helpers.doEx('s/b/$/')
+  eq('a $ c', cm.getValue());
+}, { value: 'a b c' });
 testVim('ex_substitute_empty_query', function(cm, vim, helpers) {
   // If the query is empty, use last query.
   cm.setCursor(1, 0);
@@ -2306,6 +2387,21 @@ testVim('ex_substitute_slash_regex', function(cm, vim, helpers) {
   helpers.doEx('%s/\\//|');
   eq('one|two \n three|four', cm.getValue());
 }, { value: 'one/two \n three/four'});
+testVim('ex_substitute_pipe_regex', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  helpers.doEx('%s/|/,');
+  eq('one,two \n three,four', cm.getValue());
+}, { value: 'one|two \n three|four'});
+testVim('ex_substitute_or_regex', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  helpers.doEx('%s/o\\|e\\|u/a');
+  eq('ana|twa \n thraa|faar', cm.getValue());
+}, { value: 'one|two \n three|four'});
+testVim('ex_substitute_or_word_regex', function(cm, vim, helpers) {
+  cm.setCursor(1, 0);
+  helpers.doEx('%s/\\(one\\|two\\)/five');
+  eq('five|five \n three|four', cm.getValue());
+}, { value: 'one|two \n three|four'});
 testVim('ex_substitute_backslashslash_regex', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
   helpers.doEx('%s/\\\\/,');
@@ -2320,6 +2416,30 @@ testVim('ex_substitute_backslash_replacement', function(cm, vim, helpers) {
   helpers.doEx('%s/,/\\\\/g');
   eq('one\\two \n three\\four', cm.getValue());
 }, { value: 'one,two \n three,four'});
+testVim('ex_substitute_multibackslash_replacement', function(cm, vim, helpers) {
+  helpers.doEx('%s/,/\\\\\\\\\\\\\\\\/g'); // 16 backslashes.
+  eq('one\\\\\\\\two \n three\\\\\\\\four', cm.getValue()); // 2*8 backslashes.
+}, { value: 'one,two \n three,four'});
+testVim('ex_substitute_braces_word', function(cm, vim, helpers) {
+  helpers.doEx('%s/\\(ab\\)\\{2\\}//g');
+  eq('ab abb ab{2}', cm.getValue());
+}, { value: 'ababab abb ab{2}'});
+testVim('ex_substitute_braces_range', function(cm, vim, helpers) {
+  helpers.doEx('%s/a\\{2,3\\}//g');
+  eq('a   a', cm.getValue());
+}, { value: 'a aa aaa aaaa'});
+testVim('ex_substitute_braces_literal', function(cm, vim, helpers) {
+  helpers.doEx('%s/ab{2}//g');
+  eq('ababab abb ', cm.getValue());
+}, { value: 'ababab abb ab{2}'});
+testVim('ex_substitute_braces_char', function(cm, vim, helpers) {
+  helpers.doEx('%s/ab\\{2\\}//g');
+  eq('ababab  ab{2}', cm.getValue());
+}, { value: 'ababab abb ab{2}'});
+testVim('ex_substitute_braces_no_escape', function(cm, vim, helpers) {
+  helpers.doEx('%s/ab\\{2}//g');
+  eq('ababab  ab{2}', cm.getValue());
+}, { value: 'ababab abb ab{2}'});
 testVim('ex_substitute_count', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
   helpers.doEx('s/\\d/0/i 2');
