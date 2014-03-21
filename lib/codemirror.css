@@ -49,11 +49,6 @@
 .CodeMirror div.CodeMirror-secondarycursor {
   border-left: 1px solid silver;
 }
-/* Shown when dragging text*/
-.CodeMirror div.CodeMirror-textDropCursor {
-  border-left: 1px solid black;
-  z-index: 3;
-}
 .CodeMirror.cm-keymap-fat-cursor div.CodeMirror-cursor {
   width: auto;
   border: 0;
@@ -61,12 +56,6 @@
 }
 /* Can style cursor different in overwrite (non-insert) mode */
 div.CodeMirror-overwrite div.CodeMirror-cursor {}
-
-.CodeMirror div.CodeMirror-cursor-line {
-  position: absolute;
-  left:0;
-  right:0;
-}
 
 .cm-tab { display: inline-block; }
 
@@ -231,12 +220,6 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 
 .CodeMirror-widget {}
 
-.CodeMirror-overlaywidget {
-  position: absolute;
-  width: 100%;
-  z-index: 2;
-}
-
 .CodeMirror-wrap .CodeMirror-scroll {
   overflow-x: hidden;
 }
@@ -265,23 +248,9 @@ div.CodeMirror-cursors {
   visibility: visible;
 }
 
-.CodeMirror div.CodeMirror-textDropCursor {
-  position: absolute;
-  visibility: hidden;
-  border-right: none;
-  width: 0;
-}
-.CodeMirror-focused div.CodeMirror-textDropCursor {
-  visibility: visible;
-}
-
 .CodeMirror-selected { background: #d9d9d9; }
 .CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
 .CodeMirror-crosshair { cursor: crosshair; }
-
-.CodeMirror-composing {
-  border-bottom: 3px solid black;
-}
 
 .cm-searching {
   background: #ffa;
