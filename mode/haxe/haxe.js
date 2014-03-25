@@ -322,6 +322,7 @@ CodeMirror.defineMode("haxe", function(config, parserConfig) {
   function typedef (type, value)
   {
   if(type == "variable" && /[A-Z]/.test(value.charAt(0))) { registerimport(value); return cont(); }
+  else if (type == "type" && /[A-Z]/.test(value.charAt(0))) { return cont(); }
   }
 
   function maybelabel(type) {
@@ -433,7 +434,10 @@ CodeMirror.defineMode("haxe", function(config, parserConfig) {
       else return lexical.indented + (closing ? 0 : indentUnit);
     },
 
-    electricChars: "{}"
+    electricChars: "{}",
+    blockCommentStart: "/*",
+    blockCommentEnd: "*/",
+    lineComment: "//"
   };
 });
 

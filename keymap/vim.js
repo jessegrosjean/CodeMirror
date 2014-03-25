@@ -208,6 +208,11 @@
     { keys: ['[', '`'], type: 'motion', motion: 'jumpToMark', motionArgs: { forward: false } },
     { keys: [']', '\''], type: 'motion', motion: 'jumpToMark', motionArgs: { forward: true, linewise: true } },
     { keys: ['[', '\''], type: 'motion', motion: 'jumpToMark', motionArgs: { forward: false, linewise: true } },
+    // the next two aren't motions but must come before more general motion declarations
+    { keys: [']', 'p'], type: 'action', action: 'paste', isEdit: true,
+        actionArgs: { after: true, isEdit: true, matchIndent: true}},
+    { keys: ['[', 'p'], type: 'action', action: 'paste', isEdit: true,
+        actionArgs: { after: false, isEdit: true, matchIndent: true}},
     { keys: [']', 'character'], type: 'motion',
         motion: 'moveToSymbol',
         motionArgs: { forward: true, toJumplist: true}},
@@ -2031,6 +2036,34 @@
         var text = register.toString();
         if (!text) {
           return;
+        }
+        if (actionArgs.matchIndent) {
+          // length that considers tabs and cm.options.tabSize
+          var whitespaceLength = function(str) {
+            var tabs = (str.split("\t").length - 1);
+            var spaces = (str.split(" ").length - 1);
+            return tabs * cm.options.tabSize + spaces * 1;
+          };
+          var currentLine = cm.getLine(cm.getCursor().line);
+          var indent = whitespaceLength(currentLine.match(/^\s*/)[0]);
+          // chomp last newline b/c don't want it to match /^\s*/gm
+          var chompedText = text.replace(/\n$/, '');
+          var wasChomped = text !== chompedText;
+          var firstIndent = whitespaceLength(text.match(/^\s*/)[0]);
+          var text = chompedText.replace(/^\s*/gm, function(wspace) {
+            var newIndent = indent + (whitespaceLength(wspace) - firstIndent);
+            if (newIndent < 0) {
+              return "";
+            }
+            else if (cm.options.indentWithTabs) {
+              var quotient = Math.floor(newIndent / cm.options.tabSize);
+              return Array(quotient + 1).join('\t');
+            }
+            else {
+              return Array(newIndent + 1).join(' ');
+            }
+          });
+          text += wasChomped ? "\n" : "";
         }
         if (actionArgs.repeat > 1) {
           var text = Array(actionArgs.repeat + 1).join(text);
