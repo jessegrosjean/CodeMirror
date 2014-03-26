@@ -352,12 +352,14 @@
         cm.setOption('disableInput', true);
         CodeMirror.signal(cm, "vim-mode-change", {mode: "normal"});
         cm.on('beforeSelectionChange', beforeSelectionChange);
+        cm.on('cursorActivity', onCursorActivity);
         maybeInitVimState(cm);
         CodeMirror.on(cm.getInputField(), 'paste', getOnPasteFn(cm));
       } else if (cm.state.vim) {
         cm.setOption('keyMap', 'default');
         cm.setOption('disableInput', false);
         cm.off('beforeSelectionChange', beforeSelectionChange);
+        cm.off('cursorActivity', onCursorActivity);
         CodeMirror.off(cm.getInputField(), 'paste', getOnPasteFn(cm));
         cm.state.vim = null;
       }
@@ -784,8 +786,10 @@
       },
       pushText: function(text, linewise) {
         // if this register has ever been set to linewise, use linewise.
-        if (linewise || this.linewise) {
-          this.keyBuffer.push('\n');
+        if (linewise) {
+          if (!this.linewise) {
+            this.keyBuffer.push('\n');
+          }
           this.linewise = true;
         }
         this.keyBuffer.push(text);
@@ -862,14 +866,13 @@
         // If we've gotten to this point, we've actually specified a register
         var append = isUpperCase(registerName);
         if (append) {
-          register.append(text, linewise);
-          // The unnamed register always has the same value as the last used
-          // register.
-          this.unnamedRegister.append(text, linewise);
+          register.pushText(text, linewise);
         } else {
           register.setText(text, linewise);
-          this.unnamedRegister.setText(text, linewise);
         }
+        // The unnamed register always has the same value as the last used
+        // register.
+        this.unnamedRegister.setText(register.toString(), linewise);
       },
       // Gets the register named @name.  If one of @name doesn't already exist,
       // create it.  If @name is invalid, return the unnamedRegister.
@@ -1323,16 +1326,30 @@
             motionArgs.inclusive = true;
           }
           // Swap start and end if motion was backward.
-          if (cursorIsBefore(curEnd, curStart)) {
+          if (curEnd && cursorIsBefore(curEnd, curStart)) {
             var tmp = curStart;
             curStart = curEnd;
             curEnd = tmp;
             inverted = true;
+          } else if (!curEnd) {
+            curEnd = copyCursor(curStart);
           }
           if (motionArgs.inclusive && !(vim.visualMode && inverted)) {
             // Move the selection end one to the right to include the last
             // character.
             curEnd.ch++;
+          }
+          if (operatorArgs.selOffset) {
+            // Replaying a visual mode operation
+            curEnd.line = curStart.line + operatorArgs.selOffset.line;
+            if (operatorArgs.selOffset.line) {curEnd.ch = operatorArgs.selOffset.ch; }
+            else { curEnd.ch = curStart.ch + operatorArgs.selOffset.ch; }
+          } else if (vim.visualMode) {
+            var selOffset = Pos();
+            selOffset.line = curEnd.line - curStart.line;
+            if (selOffset.line) { selOffset.ch = curEnd.ch; }
+            else { selOffset.ch = curEnd.ch - curStart.ch; }
+            operatorArgs.selOffset = selOffset;
           }
           var linewise = motionArgs.linewise ||
               (vim.visualMode && vim.visualLine);
@@ -1345,7 +1362,7 @@
           }
           operatorArgs.registerName = registerName;
           // Keep track of linewise as it affects how paste and change behave.
-          operatorArgs.linewise = linewise;
+          operatorArgs.linewise = linewise || operatorArgs.linewise;
           operators[operator](cm, operatorArgs, vim, curStart,
               curEnd, curOriginal);
           if (vim.visualMode) {
@@ -1665,6 +1682,13 @@
         var selfPaired = {'\'': true, '"': true};
 
         var character = motionArgs.selectedCharacter;
+        // 'b' refers to  '()' block.
+        // 'B' refers to  '{}' block.
+        if (character == 'b') {
+          character = '(';
+        } else if (character == 'B') {
+          character = '{';
+        }
 
         // Inclusive is the difference between a and i
         // TODO: Instead of using the additional text object map to perform text
@@ -1906,7 +1930,6 @@
         if (!vimGlobalState.macroModeState.isPlaying) {
           // Only record if not replaying.
           cm.on('change', onChange);
-          cm.on('cursorActivity', onCursorActivity);
           CodeMirror.on(cm.getInputField(), 'keydown', onKeyEventTargetKeyDown);
         }
       },
@@ -3918,7 +3941,6 @@
       var isPlaying = macroModeState.isPlaying;
       if (!isPlaying) {
         cm.off('change', onChange);
-        cm.off('cursorActivity', onCursorActivity);
         CodeMirror.off(cm.getInputField(), 'keydown', onKeyEventTargetKeyDown);
       }
       if (!isPlaying && vim.insertModeRepeat > 1) {
@@ -3928,8 +3950,8 @@
         vim.lastEditInputState.repeatOverride = vim.insertModeRepeat;
       }
       delete vim.insertModeRepeat;
-      cm.setCursor(cm.getCursor().line, cm.getCursor().ch-1);
       vim.insertMode = false;
+      cm.setCursor(cm.getCursor().line, cm.getCursor().ch-1);
       cm.setOption('keyMap', 'vim');
       cm.setOption('disableInput', true);
       cm.toggleOverwrite(false); // exit replace mode if we were in it.
@@ -4038,18 +4060,23 @@
 
     /**
     * Listens for any kind of cursor activity on CodeMirror.
-    * - For tracking cursor activity in insert mode.
-    * - Should only be active in insert mode.
     */
-    function onCursorActivity() {
-      var macroModeState = vimGlobalState.macroModeState;
-      if (macroModeState.isPlaying) { return; }
-      var lastChange = macroModeState.lastInsertModeChanges;
-      if (lastChange.expectCursorActivityForChange) {
-        lastChange.expectCursorActivityForChange = false;
-      } else {
-        // Cursor moved outside the context of an edit. Reset the change.
-        lastChange.changes = [];
+    function onCursorActivity(cm, origin) {
+      var vim = cm.state.vim;
+      if (vim.insertMode) {
+        // Tracking cursor activity in insert mode (for macro support).
+        var macroModeState = vimGlobalState.macroModeState;
+        if (macroModeState.isPlaying) { return; }
+        var lastChange = macroModeState.lastInsertModeChanges;
+        if (lastChange.expectCursorActivityForChange) {
+          lastChange.expectCursorActivityForChange = false;
+        } else {
+          // Cursor moved outside the context of an edit. Reset the change.
+          lastChange.changes = [];
+        }
+      } else if (origin == '*mouse') {
+        // Reset lastHPos if mouse click was done in normal mode.
+        vim.lastHPos = cm.doc.getCursor().ch;
       }
     }
 
