@@ -55,11 +55,6 @@
   background: #7e7;
 }
 
-.CodeMirror div.CodeMirror-dropIndicator {
-  position: absolute;
-  border-left: 1px solid black;
-}
-
 /* Can style cursor different in overwrite (non-insert) mode */
 div.CodeMirror-overwrite div.CodeMirror-cursor {}
 
