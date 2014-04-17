@@ -21,6 +21,70 @@
     };
   }
 
+  // Helper for stringWithEscapes
+  function matchSequence(list) {
+    if (list.length == 0) return stringWithEscapes;
+    return function (stream, state) {
+      var patterns = list[0];
+      for (var i = 0; i < patterns.length; i++) if (stream.match(patterns[i][0])) {
+        state.tokenize = matchSequence(list.slice(1));
+        return patterns[i][1];
+      }
+      state.tokenize = stringWithEscapes;
+      return "string";
+    };
+  }
+  function stringWithEscapes(stream, state) {
+    var escaped = false, next, end = false;
+
+    if (stream.current() == '"') return "string";
+
+    // "Complex" syntax
+    if (stream.match("${", false) || stream.match("{$", false)) {
+      state.tokenize = null;
+      return "string";
+    }
+
+    // Simple syntax
+    if (stream.match(/\$[a-zA-Z_][a-zA-Z0-9_]*/)) {
+      // After the variable name there may appear array or object operator.
+      if (stream.match("[", false)) {
+        // Match array operator
+        state.tokenize = matchSequence([
+          [["[", null]],
+          [[/\d[\w\.]*/, "number"],
+           [/\$[a-zA-Z_][a-zA-Z0-9_]*/, "variable-2"],
+           [/[\w\$]+/, "variable"]],
+          [["]", null]]
+        ]);
+      }
+      if (stream.match(/\-\>\w/, false)) {
+        // Match object operator
+        state.tokenize = matchSequence([
+          [["->", null]],
+          [[/[\w]+/, "variable"]]
+        ]);
+      }
+      return "variable-2";
+    }
+
+    // Normal string
+    while (
+      !stream.eol() &&
+      (!stream.match("{$", false)) &&
+      (!stream.match(/(\$[a-zA-Z_][a-zA-Z0-9_]*|\$\{)/, false) || escaped)
+    ) {
+      next = stream.next();
+      if (!escaped && next == '"') { end = true; break; }
+      escaped = !escaped && next == "\\";
+    }
+    if (end) {
+      state.tokenize = null;
+      state.phpEncapsStack.pop();
+    }
+    return "string";
+  }
+
   var phpKeywords = "abstract and array as break case catch class clone const continue declare default " +
     "do else elseif enddeclare endfor endforeach endif endswitch endwhile extends final " +
     "for foreach function global goto if implements interface instanceof namespace " +
@@ -62,6 +126,24 @@
           return "comment";
         }
         return false;
+      },
+      '"': function(stream, state) {
+        if (!state.phpEncapsStack)
+          state.phpEncapsStack = [];
+        state.phpEncapsStack.push(0);
+        state.tokenize = stringWithEscapes;
+        return state.tokenize(stream, state);
+      },
+      "{": function(_stream, state) {
+        if (state.phpEncapsStack && state.phpEncapsStack.length > 0)
+          state.phpEncapsStack[state.phpEncapsStack.length - 1]++;
+        return false;
+      },
+      "}": function(_stream, state) {
+        if (state.phpEncapsStack && state.phpEncapsStack.length > 0)
+          if (--state.phpEncapsStack[state.phpEncapsStack.length - 1] == 0)
+            state.tokenize = stringWithEscapes;
+        return false;
       }
     }
   };
@@ -101,7 +183,8 @@
         state.curState = state.html;
         return "meta";
       } else {
-        return phpMode.token(stream, state.curState);
+        var result = phpMode.token(stream, state.curState);
+        return (stream.pos <= stream.start) ? phpMode.token(stream, state.curState) : result;
       }
     }
 
