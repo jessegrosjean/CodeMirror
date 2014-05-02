@@ -297,6 +297,8 @@
     { keys: ['R'], type: 'action', action: 'enterInsertMode', isEdit: true,
         actionArgs: { replace: true }},
     { keys: ['u'], type: 'action', action: 'undo' },
+    { keys: ['u'], type: 'action', action: 'changeCase', actionArgs: {toLower: true}, context: 'visual', isEdit: true },
+    { keys: ['U'],type: 'action', action: 'changeCase', actionArgs: {toLower: false}, context: 'visual', isEdit: true },
     { keys: ['<C-r>'], type: 'action', action: 'redo' },
     { keys: ['m', 'character'], type: 'action', action: 'setMark' },
     { keys: ['"', 'character'], type: 'action', action: 'setRegister' },
@@ -2212,6 +2214,22 @@
           repeat = vim.lastEditInputState.repeatOverride || repeat;
         }
         repeatLastEdit(cm, vim, repeat, false /** repeatForInsert */);
+      },
+      changeCase: function(cm, actionArgs, vim) {
+        var selectedAreaRange = getSelectedAreaRange(cm, vim);
+        var selectionStart = selectedAreaRange[0];
+        var selectionEnd = selectedAreaRange[1];
+        var toLower = actionArgs.toLower;
+        if (cursorIsBefore(selectionEnd, selectionStart)) {
+          var tmp = selectionStart;
+          selectionStart = selectionEnd;
+          selectionEnd = tmp;
+        } else {
+          selectionEnd = cm.clipPos(Pos(selectionEnd.line, selectionEnd.ch+1));
+        }
+        var text = cm.getRange(selectionStart, selectionEnd);
+        cm.replaceRange(toLower ? text.toLowerCase() : text.toUpperCase(), selectionStart, selectionEnd);
+        cm.setCursor(selectionStart);
       }
     };
 
@@ -2293,6 +2311,22 @@
     }
     function escapeRegex(s) {
       return s.replace(/([.?*+$\[\]\/\\(){}|\-])/g, '\\$1');
+    }
+    function getSelectedAreaRange(cm, vim) {
+      var selectionStart = cm.getCursor('anchor');
+      var selectionEnd = cm.getCursor('head');
+      var lastSelection = vim.lastSelection;
+      if (!vim.visualMode) {
+        var line = lastSelection.curEnd.line - lastSelection.curStart.line;
+        var ch = line ? lastSelection.curEnd.ch : lastSelection.curEnd.ch - lastSelection.curStart.ch;
+        selectionEnd = {line: selectionEnd.line + line, ch: line ? selectionEnd.ch : ch + selectionEnd.ch};
+        if (lastSelection.visualLine) {
+          return [{line: selectionStart.line, ch: 0}, {line: selectionEnd.line, ch: lineLength(cm, selectionEnd.line)}];
+        }
+      } else {
+        exitVisualMode(cm);
+      }
+      return [selectionStart, selectionEnd];
     }
 
     function exitVisualMode(cm) {
