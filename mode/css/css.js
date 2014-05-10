@@ -1,3 +1,6 @@
+// CodeMirror 4.1.1, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
@@ -433,8 +436,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "region-break-before", "region-break-inside", "region-fragment",
     "rendering-intent", "resize", "rest", "rest-after", "rest-before", "richness",
     "right", "rotation", "rotation-point", "ruby-align", "ruby-overhang",
-    "ruby-position", "ruby-span", "shape-inside", "shape-outside", "size",
-    "speak", "speak-as", "speak-header",
+    "ruby-position", "ruby-span", "shape-image-threshold", "shape-inside", "shape-margin",
+    "shape-outside", "size", "speak", "speak-as", "speak-header",
     "speak-numeral", "speak-punctuation", "speech-rate", "stress", "string-set",
     "tab-size", "table-layout", "target", "target-name", "target-new",
     "target-position", "text-align", "text-align-last", "text-decoration",
