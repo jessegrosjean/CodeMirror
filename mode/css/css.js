@@ -167,7 +167,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (type == ":") {
       return "pseudo";
     } else if (allowNested && type == "(") {
-      return pushContext(state, stream, "params");
+      return pushContext(state, stream, "parens");
     }
     return state.context.type;
   };
@@ -228,6 +228,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   states.parens = function(type, stream, state) {
     if (type == "{" || type == "}") return popAndPass(type, stream, state);
     if (type == ")") return popContext(state);
+    if (type == "(") return pushContext(state, stream, "parens");
+    if (type == "word") wordAsValue(stream);
     return "parens";
   };
 
@@ -303,13 +305,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     return "interpolation";
   };
 
-  states.params = function(type, stream, state) {
-    if (type == ")") return popContext(state);
-    if (type == "{" || type == "}") return popAndPass(type, stream, state);
-    if (type == "word") wordAsValue(stream);
-    return "params";
-  };
-
   return {
     startState: function(base) {
       return {tokenize: null,
@@ -332,10 +327,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     indent: function(state, textAfter) {
       var cx = state.context, ch = textAfter && textAfter.charAt(0);
       var indent = cx.indent;
-      if (cx.type == "prop" && ch == "}") cx = cx.prev;
+      if (cx.type == "prop" && (ch == "}" || ch == ")")) cx = cx.prev;
       if (cx.prev &&
           (ch == "}" && (cx.type == "block" || cx.type == "top" || cx.type == "interpolation" || cx.type == "font_face") ||
-           ch == ")" && (cx.type == "parens" || cx.type == "params" || cx.type == "media_parens") ||
+           ch == ")" && (cx.type == "parens" || cx.type == "media_parens") ||
            ch == "{" && (cx.type == "at" || cx.type == "media"))) {
         indent = cx.indent - indentUnit;
         cx = cx.prev;
@@ -425,7 +420,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "marker-offset", "marks", "marquee-direction", "marquee-loop",
     "marquee-play-count", "marquee-speed", "marquee-style", "max-height",
     "max-width", "min-height", "min-width", "move-to", "nav-down", "nav-index",
-    "nav-left", "nav-right", "nav-up", "opacity", "order", "orphans", "outline",
+    "nav-left", "nav-right", "nav-up", "object-fit", "object-position",
+    "opacity", "order", "orphans", "outline",
     "outline-color", "outline-offset", "outline-style", "outline-width",
     "overflow", "overflow-style", "overflow-wrap", "overflow-x", "overflow-y",
     "padding", "padding-bottom", "padding-left", "padding-right", "padding-top",
