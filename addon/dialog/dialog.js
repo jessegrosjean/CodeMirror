@@ -1,4 +1,4 @@
-// CodeMirror 4.1.1, copyright (c) by Marijn Haverbeke and others
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
 // Open simple dialogs on top of an editor. Relies on dialog.css.
@@ -38,10 +38,14 @@
     closeNotification(this, null);
     var dialog = dialogDiv(this, template, options && options.bottom);
     var closed = false, me = this;
-    function close() {
-      if (closed) return;
-      closed = true;
-      dialog.parentNode.removeChild(dialog);
+    function close(newVal) {
+      if (typeof newVal == 'string') {
+        inp.value = newVal;
+      } else {
+        if (closed) return;
+        closed = true;
+        dialog.parentNode.removeChild(dialog);
+      }
     }
     var inp = dialog.getElementsByTagName("input")[0], button;
     if (inp) {

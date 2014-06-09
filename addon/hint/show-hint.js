@@ -1,4 +1,4 @@
-// CodeMirror 4.1.1, copyright (c) by Marijn Haverbeke and others
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
 (function(mod) {
@@ -72,7 +72,7 @@
     showHints: function(data) {
       if (!data || !data.list.length || !this.active()) return this.close();
 
-      if (this.options.completionSingle && data.list.length == 1)
+      if (this.options.completeSingle && data.list.length == 1)
         this.pick(data, 0);
       else
         this.showWidget(data);
@@ -375,7 +375,7 @@
 
   var defaultOptions = {
     hint: CodeMirror.hint.auto,
-    completionSingle: true,
+    completeSingle: true,
     alignWithWord: true,
     closeCharacters: /[\s()\[\]{};:>,]/,
     closeOnUnfocus: true,

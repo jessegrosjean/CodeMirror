@@ -1591,16 +1591,35 @@ testVim('visual_blank', function(cm, vim, helpers) {
   eq(vim.visualMode, true);
 }, { value: '\n' });
 testVim('reselect_visual', function(cm, vim, helpers) {
-  helpers.doKeys('l', 'v', 'l', 'l', 'y', 'g', 'v');
-  helpers.assertCursorAt(0, 3);
+  helpers.doKeys('l', 'v', 'l', 'l', 'l', 'y', 'g', 'v');
+  helpers.assertCursorAt(0, 4);
   eqPos(makeCursor(0, 1), cm.getCursor('anchor'));
-  helpers.doKeys('d');
-  eq('15', cm.getValue());
-}, { value: '12345' });
+  helpers.doKeys('v');
+  cm.setCursor(1, 0);
+  helpers.doKeys('v', 'l', 'l', 'p');
+  eq('123456\n2345\nbar', cm.getValue());
+  cm.setCursor(0, 0);
+  helpers.doKeys('g', 'v');
+  helpers.assertCursorAt(1, 3);
+  eqPos(makeCursor(1, 0), cm.getCursor('anchor'));
+  helpers.doKeys('v');
+  cm.setCursor(2, 0);
+  helpers.doKeys('v', 'l', 'l', 'g', 'v');
+  helpers.assertCursorAt(1, 3);
+  eqPos(makeCursor(1, 0), cm.getCursor('anchor'));
+  helpers.doKeys('g', 'v');
+  helpers.assertCursorAt(2, 2);
+  eqPos(makeCursor(2, 0), cm.getCursor('anchor'));
+  eq('123456\n2345\nbar', cm.getValue());
+}, { value: '123456\nfoo\nbar' });
 testVim('reselect_visual_line', function(cm, vim, helpers) {
   helpers.doKeys('l', 'V', 'l', 'j', 'j', 'V', 'g', 'v', 'd');
-  eq(' 4\n 5', cm.getValue());
-}, { value: ' 1\n 2\n 3\n 4\n 5' });
+  eq(' foo\n and\n bar', cm.getValue());
+  cm.setCursor(0, 0);
+  helpers.doKeys('V', 'y', 'j');
+  helpers.doKeys('V', 'p' , 'g', 'v', 'd');
+  eq(' foo\n bar', cm.getValue());
+}, { value: ' hello\n this\n is \n foo\n and\n bar' });
 testVim('s_normal', function(cm, vim, helpers) {
   cm.setCursor(0, 1);
   helpers.doKeys('s');
@@ -1867,6 +1886,24 @@ testVim('macro_insert', function(cm, vim, helpers) {
   helpers.doKeys('q', '@', 'a');
   eq('foofoo', cm.getValue());
 }, { value: ''});
+testVim('macro_insert_repeat', function(cm, vim, helpers) {
+  cm.setCursor(0, 0);
+  helpers.doKeys('q', 'a', '$', 'a');
+  cm.replaceRange('larry.', cm.getCursor());
+  helpers.doInsertModeKeys('Esc');
+  helpers.doKeys('a');
+  cm.replaceRange('curly.', cm.getCursor());
+  helpers.doInsertModeKeys('Esc');
+  helpers.doKeys('q');
+  helpers.doKeys('a');
+  cm.replaceRange('moe.', cm.getCursor());
+  helpers.doInsertModeKeys('Esc');
+  helpers.doKeys('@', 'a');
+  // At this point, the most recent edit should be the 2nd insert change
+  // inside the macro, i.e. "curly.".
+  helpers.doKeys('.');
+  eq('larry.curly.moe.larry.curly.curly.', cm.getValue());
+}, { value: ''});
 testVim('macro_space', function(cm, vim, helpers) {
   cm.setCursor(0, 0);
   helpers.doKeys('<Space>', '<Space>');
@@ -2055,6 +2092,127 @@ testVim(':_register', function(cm,vim,helpers) {
     is(/:\s+bar/.test(text));
   });
   helpers.doKeys(':');
+}, {value: ''});
+testVim('search_register_escape', function(cm, vim, helpers) {
+  // Check that the register is restored if the user escapes rather than confirms.
+  cm.openDialog = helpers.fakeOpenDialog('waldo');
+  helpers.doKeys('/');
+  var onKeyDown;
+  var onKeyUp;
+  var KEYCODES = {
+    f: 70,
+    o: 79,
+    Esc: 27
+  };
+  cm.openDialog = function(template, callback, options) {
+    onKeyDown = options.onKeyDown;
+    onKeyUp = options.onKeyUp;
+  };
+  var close = function() {};
+  helpers.doKeys('/');
+  // Fake some keyboard events coming in.
+  onKeyDown({keyCode: KEYCODES.f}, '', close);
+  onKeyUp({keyCode: KEYCODES.f}, '', close);
+  onKeyDown({keyCode: KEYCODES.o}, 'f', close);
+  onKeyUp({keyCode: KEYCODES.o}, 'f', close);
+  onKeyDown({keyCode: KEYCODES.o}, 'fo', close);
+  onKeyUp({keyCode: KEYCODES.o}, 'fo', close);
+  onKeyDown({keyCode: KEYCODES.Esc}, 'foo', close);
+  cm.openDialog = helpers.fakeOpenDialog('registers');
+  cm.openNotification = helpers.fakeOpenNotification(function(text) {
+    is(/waldo/.test(text));
+    is(!/foo/.test(text));
+  });
+  helpers.doKeys(':');
+}, {value: ''});
+testVim('search_register', function(cm, vim, helpers) {
+  cm.openDialog = helpers.fakeOpenDialog('foo');
+  helpers.doKeys('/');
+  cm.openDialog = helpers.fakeOpenDialog('registers');
+  cm.openNotification = helpers.fakeOpenNotification(function(text) {
+    is(/\/\s+foo/.test(text));
+  });
+  helpers.doKeys(':');
+}, {value: ''});
+testVim('search_history', function(cm, vim, helpers) {
+  cm.openDialog = helpers.fakeOpenDialog('this');
+  helpers.doKeys('/');
+  cm.openDialog = helpers.fakeOpenDialog('checks');
+  helpers.doKeys('/');
+  cm.openDialog = helpers.fakeOpenDialog('search');
+  helpers.doKeys('/');
+  cm.openDialog = helpers.fakeOpenDialog('history');
+  helpers.doKeys('/');
+  cm.openDialog = helpers.fakeOpenDialog('checks');
+  helpers.doKeys('/');
+  var onKeyDown;
+  var onKeyUp;
+  var query = '';
+  var keyCodes = {
+    Up: 38,
+    Down: 40
+  };
+  cm.openDialog = function(template, callback, options) {
+    onKeyUp = options.onKeyUp;
+    onKeyDown = options.onKeyDown;
+  };
+  var close = function(newVal) {
+    if (typeof newVal == 'string') query = newVal;
+  }
+  helpers.doKeys('/');
+  onKeyDown({keyCode: keyCodes.Up}, query, close);
+  onKeyUp({keyCode: keyCodes.Up}, query, close);
+  eq(query, 'checks');
+  onKeyDown({keyCode: keyCodes.Up}, query, close);
+  onKeyUp({keyCode: keyCodes.Up}, query, close);
+  eq(query, 'history');
+  onKeyDown({keyCode: keyCodes.Up}, query, close);
+  onKeyUp({keyCode: keyCodes.Up}, query, close);
+  eq(query, 'search');
+  onKeyDown({keyCode: keyCodes.Up}, query, close);
+  onKeyUp({keyCode: keyCodes.Up}, query, close);
+  eq(query, 'this');
+  onKeyDown({keyCode: keyCodes.Down}, query, close);
+  onKeyUp({keyCode: keyCodes.Down}, query, close);
+  eq(query, 'search');
+}, {value: ''});
+testVim('exCommand_history', function(cm, vim, helpers) {
+  cm.openDialog = helpers.fakeOpenDialog('registers');
+  helpers.doKeys(':');
+  cm.openDialog = helpers.fakeOpenDialog('sort');
+  helpers.doKeys(':');
+  cm.openDialog = helpers.fakeOpenDialog('map');
+  helpers.doKeys(':');
+  cm.openDialog = helpers.fakeOpenDialog('invalid');
+  helpers.doKeys(':');
+  var onKeyDown;
+  var onKeyUp;
+  var input = '';
+  var keyCodes = {
+    Up: 38,
+    Down: 40,
+    s: 115
+  };
+  cm.openDialog = function(template, callback, options) {
+    onKeyUp = options.onKeyUp;
+    onKeyDown = options.onKeyDown;
+  };
+  var close = function(newVal) {
+    if (typeof newVal == 'string') input = newVal;
+  }
+  helpers.doKeys(':');
+  onKeyDown({keyCode: keyCodes.Up}, input, close);
+  eq(input, 'invalid');
+  onKeyDown({keyCode: keyCodes.Up}, input, close);
+  eq(input, 'map');
+  onKeyDown({keyCode: keyCodes.Up}, input, close);
+  eq(input, 'sort');
+  onKeyDown({keyCode: keyCodes.Up}, input, close);
+  eq(input, 'registers');
+  onKeyDown({keyCode: keyCodes.s}, '', close);
+  input = 's';
+  onKeyDown({keyCode: keyCodes.Up}, input, close);
+  eq(input, 'sort');
 }, {value: ''});
 testVim('.', function(cm, vim, helpers) {
   cm.setCursor(0, 0);
@@ -2677,7 +2835,14 @@ testVim('ex_sort_decimal_mixed_reverse', function(cm, vim, helpers) {
   helpers.doEx('sort! d');
   eq('a3\nb2\nc1\nz\ny', cm.getValue());
 }, { value: 'a3\nz\nc1\ny\nb2'});
-
+// test for :global command
+testVim('ex_global', function(cm, vim, helpers) {
+  cm.setCursor(0, 0);
+  helpers.doEx('g/one/s//two');
+  eq('two two\n two two\n two two', cm.getValue());
+  helpers.doEx('1,2g/two/s//one');
+  eq('one one\n one one\n two two', cm.getValue());
+}, {value: 'one one\n one one\n one one'});
 // Basic substitute tests.
 testVim('ex_substitute_same_line', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
