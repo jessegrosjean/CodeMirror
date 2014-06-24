@@ -521,7 +521,7 @@ testVim('dl_eol', function(cm, vim, helpers) {
   var register = helpers.getRegisterController().getRegister();
   eq(' ', register.toString());
   is(!register.linewise);
-  helpers.assertCursorAt(0, 5);
+  helpers.assertCursorAt(0, 6);
 }, { value: ' word1 ' });
 testVim('dl_repeat', function(cm, vim, helpers) {
   var curStart = makeCursor(0, 0);
@@ -612,7 +612,7 @@ testVim('dw_only_word', function(cm, vim, helpers) {
   var register = helpers.getRegisterController().getRegister();
   eq('word1 ', register.toString());
   is(!register.linewise);
-  helpers.assertCursorAt(0, 0);
+  helpers.assertCursorAt(0, 1);
 }, { value: ' word1 ' });
 testVim('dw_eol', function(cm, vim, helpers) {
   // Assert that dw does not delete the newline if last word to delete is at end
@@ -623,7 +623,7 @@ testVim('dw_eol', function(cm, vim, helpers) {
   var register = helpers.getRegisterController().getRegister();
   eq('word1', register.toString());
   is(!register.linewise);
-  helpers.assertCursorAt(0, 0);
+  helpers.assertCursorAt(0, 1);
 }, { value: ' word1\nword2' });
 testVim('dw_eol_with_multiple_newlines', function(cm, vim, helpers) {
   // Assert that dw does not delete the newline if last word to delete is at end
@@ -634,7 +634,7 @@ testVim('dw_eol_with_multiple_newlines', function(cm, vim, helpers) {
   var register = helpers.getRegisterController().getRegister();
   eq('word1', register.toString());
   is(!register.linewise);
-  helpers.assertCursorAt(0, 0);
+  helpers.assertCursorAt(0, 1);
 }, { value: ' word1\n\nword2' });
 testVim('dw_empty_line_followed_by_whitespace', function(cm, vim, helpers) {
   cm.setCursor(0, 0);
@@ -680,7 +680,7 @@ testVim('dw_repeat', function(cm, vim, helpers) {
   var register = helpers.getRegisterController().getRegister();
   eq('word1\nword2', register.toString());
   is(!register.linewise);
-  helpers.assertCursorAt(0, 0);
+  helpers.assertCursorAt(0, 1);
 }, { value: ' word1\nword2' });
 testVim('de_word_start_and_empty_lines', function(cm, vim, helpers) {
   cm.setCursor(0, 0);
@@ -1070,7 +1070,7 @@ testVim('D', function(cm, vim, helpers) {
   var register = helpers.getRegisterController().getRegister();
   eq('rd1', register.toString());
   is(!register.linewise);
-  helpers.assertCursorAt(0, 2);
+  helpers.assertCursorAt(0, 3);
 }, { value: ' word1\nword2\n word3' });
 testVim('C', function(cm, vim, helpers) {
   var curStart = makeCursor(0, 3);
@@ -1564,7 +1564,7 @@ testVim('delmark_all', function(cm, vim, helpers) {
 });
 testVim('visual', function(cm, vim, helpers) {
   helpers.doKeys('l', 'v', 'l', 'l');
-  helpers.assertCursorAt(0, 3);
+  helpers.assertCursorAt(0, 4);
   eqPos(makeCursor(0, 1), cm.getCursor('anchor'));
   helpers.doKeys('d');
   eq('15', cm.getValue());
@@ -1573,6 +1573,20 @@ testVim('visual_line', function(cm, vim, helpers) {
   helpers.doKeys('l', 'V', 'l', 'j', 'j', 'd');
   eq(' 4\n 5', cm.getValue());
 }, { value: ' 1\n 2\n 3\n 4\n 5' });
+testVim('visual_block', function(cm, vim, helpers) {
+  // test the block selection with lines of different length
+  // i.e. extending the selection
+  // till the end of the longest line.
+  helpers.doKeys('<C-v>', 'l', 'j', 'j', '6', 'l', 'd');
+  helpers.doKeys('d', 'd', 'd', 'd');
+  eq('', cm.getValue());
+  // check for left side selection in case
+  // of moving up to a shorter line.
+  cm.replaceRange('hello world\n{\nthis is\nsparta!', cm.getCursor());
+  cm.setCursor(3, 4);
+  helpers.doKeys('<C-v>', 'l', 'k', 'k', 'd');
+  eq('hello world\n{\nt is\nsta!', cm.getValue());
+}, {value: '1234\n5678\nabcdefg'});
 testVim('visual_marks', function(cm, vim, helpers) {
   helpers.doKeys('l', 'v', 'l', 'l', 'j', 'j', 'v');
   // Test visual mode marks
@@ -1592,7 +1606,7 @@ testVim('visual_blank', function(cm, vim, helpers) {
 }, { value: '\n' });
 testVim('reselect_visual', function(cm, vim, helpers) {
   helpers.doKeys('l', 'v', 'l', 'l', 'l', 'y', 'g', 'v');
-  helpers.assertCursorAt(0, 4);
+  helpers.assertCursorAt(0, 5);
   eqPos(makeCursor(0, 1), cm.getCursor('anchor'));
   helpers.doKeys('v');
   cm.setCursor(1, 0);
@@ -1605,21 +1619,21 @@ testVim('reselect_visual', function(cm, vim, helpers) {
   helpers.doKeys('v');
   cm.setCursor(2, 0);
   helpers.doKeys('v', 'l', 'l', 'g', 'v');
-  helpers.assertCursorAt(1, 3);
+  helpers.assertCursorAt(1, 4);
   eqPos(makeCursor(1, 0), cm.getCursor('anchor'));
   helpers.doKeys('g', 'v');
-  helpers.assertCursorAt(2, 2);
+  helpers.assertCursorAt(2, 3);
   eqPos(makeCursor(2, 0), cm.getCursor('anchor'));
   eq('123456\n2345\nbar', cm.getValue());
 }, { value: '123456\nfoo\nbar' });
 testVim('reselect_visual_line', function(cm, vim, helpers) {
-  helpers.doKeys('l', 'V', 'l', 'j', 'j', 'V', 'g', 'v', 'd');
-  eq(' foo\n and\n bar', cm.getValue());
-  cm.setCursor(0, 0);
+  helpers.doKeys('l', 'V', 'j', 'j', 'V', 'g', 'v', 'd');
+  eq('\nfoo\nand\nbar', cm.getValue());
+  cm.setCursor(1, 0);
   helpers.doKeys('V', 'y', 'j');
   helpers.doKeys('V', 'p' , 'g', 'v', 'd');
-  eq(' foo\n bar', cm.getValue());
-}, { value: ' hello\n this\n is \n foo\n and\n bar' });
+  eq('\nfoo\nbar', cm.getValue());
+}, { value: 'hello\nthis\nis\nfoo\nand\nbar' });
 testVim('s_normal', function(cm, vim, helpers) {
   cm.setCursor(0, 1);
   helpers.doKeys('s');
@@ -1642,7 +1656,7 @@ testVim('o_visual', function(cm,vim,helpers) {
   helpers.assertCursorAt(0,0);
   helpers.doKeys('o');
   helpers.doKeys('l','l')
-  helpers.assertCursorAt(3,2);
+  helpers.assertCursorAt(3, 3);
   helpers.doKeys('d');
   eq('p',cm.getValue());
 }, { value: 'abcd\nefgh\nijkl\nmnop'});
@@ -1668,15 +1682,15 @@ testVim('uppercase/lowercase_visual', function(cm, vim, helpers) {
 testVim('visual_paste', function(cm, vim, helpers) {
   cm.setCursor(0, 0);
   helpers.doKeys('v', 'l', 'l', 'y', 'j', 'v', 'l', 'p');
-  helpers.assertCursorAt(1, 4);
-  eq('this is a\nunthi test for visual paste', cm.getValue());
+  helpers.assertCursorAt(1, 5);
+  eq('this is a\nunithitest for visual paste', cm.getValue());
   cm.setCursor(0, 0);
   // in case of pasting whole line
   helpers.doKeys('y', 'y');
   cm.setCursor(1, 6);
   helpers.doKeys('v', 'l', 'l', 'l', 'p');
   helpers.assertCursorAt(2, 0);
-  eq('this is a\nunthi \nthis is a\n for visual paste', cm.getValue());
+  eq('this is a\nunithi\nthis is a\n for visual paste', cm.getValue());
 }, { value: 'this is a\nunit test for visual paste'});
 
 // This checks the contents of the register used to paste the text
@@ -2843,27 +2857,54 @@ testVim('ex_global', function(cm, vim, helpers) {
   helpers.doEx('1,2g/two/s//one');
   eq('one one\n one one\n two two', cm.getValue());
 }, {value: 'one one\n one one\n one one'});
+testVim('ex_global_confirm', function(cm, vim, helpers) {
+  cm.setCursor(0, 0);
+  var onKeyDown;
+  var openDialogSave = cm.openDialog;
+  var KEYCODES = {
+    a: 65,
+    n: 78,
+    q: 81,
+    y: 89
+  };
+  // Intercept the ex command, 'global'
+  cm.openDialog = function(template, callback, options) {
+    // Intercept the prompt for the embedded ex command, 'substitute'
+    cm.openDialog = function(template, callback, options) {
+      onKeyDown = options.onKeyDown;
+    };
+    callback('g/one/s//two/gc');
+  };
+  helpers.doKeys(':');
+  var close = function() {};
+  onKeyDown({keyCode: KEYCODES.n}, '', close);
+  onKeyDown({keyCode: KEYCODES.y}, '', close);
+  onKeyDown({keyCode: KEYCODES.a}, '', close);
+  onKeyDown({keyCode: KEYCODES.q}, '', close);
+  onKeyDown({keyCode: KEYCODES.y}, '', close);
+  eq('one two\n two two\n one one\n two one\n one one', cm.getValue());
+}, {value: 'one one\n one one\n one one\n one one\n one one'});
 // Basic substitute tests.
 testVim('ex_substitute_same_line', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
-  helpers.doEx('s/one/two');
+  helpers.doEx('s/one/two/g');
   eq('one one\n two two', cm.getValue());
 }, { value: 'one one\n one one'});
-testVim('ex_substitute_global', function(cm, vim, helpers) {
+testVim('ex_substitute_full_file', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
-  helpers.doEx('%s/one/two');
+  helpers.doEx('%s/one/two/g');
   eq('two two\n two two', cm.getValue());
 }, { value: 'one one\n one one'});
 testVim('ex_substitute_input_range', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
-  helpers.doEx('1,3s/\\d/0');
+  helpers.doEx('1,3s/\\d/0/g');
   eq('0\n0\n0\n4', cm.getValue());
 }, { value: '1\n2\n3\n4' });
 testVim('ex_substitute_visual_range', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
   // Set last visual mode selection marks '< and '> at lines 2 and 4
   helpers.doKeys('V', '2', 'j', 'v');
-  helpers.doEx('\'<,\'>s/\\d/0');
+  helpers.doEx('\'<,\'>s/\\d/0/g');
   eq('1\n0\n0\n0\n5', cm.getValue());
 }, { value: '1\n2\n3\n4\n5' });
 testVim('ex_substitute_empty_query', function(cm, vim, helpers) {
@@ -2871,7 +2912,7 @@ testVim('ex_substitute_empty_query', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
   cm.openDialog = helpers.fakeOpenDialog('1');
   helpers.doKeys('/');
-  helpers.doEx('s//b');
+  helpers.doEx('s//b/g');
   eq('abb ab2 ab3', cm.getValue());
 }, { value: 'a11 a12 a13' });
 testVim('ex_substitute_javascript', function(cm, vim, helpers) {
@@ -2879,15 +2920,15 @@ testVim('ex_substitute_javascript', function(cm, vim, helpers) {
   cm.setCursor(1, 0);
   // Throw all the things that javascript likes to treat as special values
   // into the replace part. All should be literal (this is VIM).
-  helpers.doEx('s/\\(\\d+\\)/$$ $\' $` $& \\1/')
+  helpers.doEx('s/\\(\\d+\\)/$$ $\' $` $& \\1/g')
   eq('a $$ $\' $` $& 0 b', cm.getValue());
 }, { value: 'a 0 b' });
 testVim('ex_substitute_empty_arguments', function(cm,vim,helpers) {
   cm.setCursor(0, 0);
-  helpers.doEx('s/a/b');
+  helpers.doEx('s/a/b/g');
   cm.setCursor(1, 0);
   helpers.doEx('s');
-  eq('b b\nb b', cm.getValue());
+  eq('b b\nb a', cm.getValue());
 }, {value: 'a a\na a'});
 
 // More complex substitute tests that test both pcre and nopcre options.
@@ -2911,24 +2952,24 @@ testSubstitute('ex_substitute_capture', {
   value: 'a11 a12 a13',
   expectedValue: 'a1111 a1212 a1313',
   // $n is a backreference
-  expr: 's/(\\d+)/$1$1/',
+  expr: 's/(\\d+)/$1$1/g',
   // \n is a backreference.
-  noPcreExpr: 's/\\(\\d+\\)/\\1\\1/'});
+  noPcreExpr: 's/\\(\\d+\\)/\\1\\1/g'});
 testSubstitute('ex_substitute_capture2', {
   value: 'a 0 b',
   expectedValue: 'a $00 b',
-  expr: 's/(\\d+)/$$$1$1/',
-  noPcreExpr: 's/\\(\\d+\\)/$\\1\\1/'});
+  expr: 's/(\\d+)/$$$1$1/g',
+  noPcreExpr: 's/\\(\\d+\\)/$\\1\\1/g'});
 testSubstitute('ex_substitute_nocapture', {
   value: 'a11 a12 a13',
   expectedValue: 'a$1$1 a$1$1 a$1$1',
-  expr: 's/(\\d+)/$$1$$1',
-  noPcreExpr: 's/\\(\\d+\\)/$1$1/'});
+  expr: 's/(\\d+)/$$1$$1/g',
+  noPcreExpr: 's/\\(\\d+\\)/$1$1/g'});
 testSubstitute('ex_substitute_nocapture2', {
   value: 'a 0 b',
   expectedValue: 'a $10 b',
-  expr: 's/(\\d+)/$$1$1',
-  noPcreExpr: 's/\\(\\d+\\)/\\$1\\1/'});
+  expr: 's/(\\d+)/$$1$1/g',
+  noPcreExpr: 's/\\(\\d+\\)/\\$1\\1/g'});
 testSubstitute('ex_substitute_nocapture', {
   value: 'a b c',
   expectedValue: 'a $ c',
@@ -2946,13 +2987,13 @@ testSubstitute('ex_substitute_pipe_regex', {
 testSubstitute('ex_substitute_or_regex', {
   value: 'one|two \n three|four',
   expectedValue: 'ana|twa \n thraa|faar',
-  expr: '%s/o|e|u/a',
-  noPcreExpr: '%s/o\\|e\\|u/a'});
+  expr: '%s/o|e|u/a/g',
+  noPcreExpr: '%s/o\\|e\\|u/a/g'});
 testSubstitute('ex_substitute_or_word_regex', {
   value: 'one|two \n three|four',
   expectedValue: 'five|five \n three|four',
-  expr: '%s/(one|two)/five/',
-  noPcreExpr: '%s/\\(one\\|two\\)/five'});
+  expr: '%s/(one|two)/five/g',
+  noPcreExpr: '%s/\\(one\\|two\\)/five/g'});
 testSubstitute('ex_substitute_backslashslash_regex', {
   value: 'one\\two \n three\\four',
   expectedValue: 'one,two \n three,four',
@@ -3002,6 +3043,10 @@ testSubstitute('ex_substitute_count_with_range', {
   value: '1\n2\n3\n4',
   expectedValue: '1\n2\n0\n0',
   expr: '1,3s/\\d/0/ 3'});
+testSubstitute('ex_substitute_not_global', {
+  value: 'aaa\nbaa\ncaa',
+  expectedValue: 'xaa\nbxa\ncxa',
+  expr: '%s/a/x/'});
 function testSubstituteConfirm(name, command, initialValue, expectedValue, keys, finalPos) {
   testVim(name, function(cm, vim, helpers) {
     var savedOpenDialog = cm.openDialog;
@@ -3051,29 +3096,29 @@ testSubstituteConfirm('ex_substitute_confirm_emptydoc',
 testSubstituteConfirm('ex_substitute_confirm_nomatch',
     '%s/x/b/c', 'ba a\nbab', 'ba a\nbab', '', makeCursor(0, 0));
 testSubstituteConfirm('ex_substitute_confirm_accept',
-    '%s/a/b/c', 'ba a\nbab', 'bb b\nbbb', 'yyy', makeCursor(1, 1));
+    '%s/a/b/cg', 'ba a\nbab', 'bb b\nbbb', 'yyy', makeCursor(1, 1));
 testSubstituteConfirm('ex_substitute_confirm_random_keys',
-    '%s/a/b/c', 'ba a\nbab', 'bb b\nbbb', 'ysdkywerty', makeCursor(1, 1));
+    '%s/a/b/cg', 'ba a\nbab', 'bb b\nbbb', 'ysdkywerty', makeCursor(1, 1));
 testSubstituteConfirm('ex_substitute_confirm_some',
-    '%s/a/b/c', 'ba a\nbab', 'bb a\nbbb', 'yny', makeCursor(1, 1));
+    '%s/a/b/cg', 'ba a\nbab', 'bb a\nbbb', 'yny', makeCursor(1, 1));
 testSubstituteConfirm('ex_substitute_confirm_all',
-    '%s/a/b/c', 'ba a\nbab', 'bb b\nbbb', 'a', makeCursor(1, 1));
+    '%s/a/b/cg', 'ba a\nbab', 'bb b\nbbb', 'a', makeCursor(1, 1));
 testSubstituteConfirm('ex_substitute_confirm_accept_then_all',
-    '%s/a/b/c', 'ba a\nbab', 'bb b\nbbb', 'ya', makeCursor(1, 1));
+    '%s/a/b/cg', 'ba a\nbab', 'bb b\nbbb', 'ya', makeCursor(1, 1));
 testSubstituteConfirm('ex_substitute_confirm_quit',
-    '%s/a/b/c', 'ba a\nbab', 'bb a\nbab', 'yq', makeCursor(0, 3));
+    '%s/a/b/cg', 'ba a\nbab', 'bb a\nbab', 'yq', makeCursor(0, 3));
 testSubstituteConfirm('ex_substitute_confirm_last',
-    '%s/a/b/c', 'ba a\nbab', 'bb b\nbab', 'yl', makeCursor(0, 3));
+    '%s/a/b/cg', 'ba a\nbab', 'bb b\nbab', 'yl', makeCursor(0, 3));
 testSubstituteConfirm('ex_substitute_confirm_oneline',
-    '1s/a/b/c', 'ba a\nbab', 'bb b\nbab', 'yl', makeCursor(0, 3));
+    '1s/a/b/cg', 'ba a\nbab', 'bb b\nbab', 'yl', makeCursor(0, 3));
 testSubstituteConfirm('ex_substitute_confirm_range_accept',
-    '1,2s/a/b/c', 'aa\na \na\na', 'bb\nb \na\na', 'yyy', makeCursor(1, 0));
+    '1,2s/a/b/cg', 'aa\na \na\na', 'bb\nb \na\na', 'yyy', makeCursor(1, 0));
 testSubstituteConfirm('ex_substitute_confirm_range_some',
-    '1,3s/a/b/c', 'aa\na \na\na', 'ba\nb \nb\na', 'ynyy', makeCursor(2, 0));
+    '1,3s/a/b/cg', 'aa\na \na\na', 'ba\nb \nb\na', 'ynyy', makeCursor(2, 0));
 testSubstituteConfirm('ex_substitute_confirm_range_all',
-    '1,3s/a/b/c', 'aa\na \na\na', 'bb\nb \nb\na', 'a', makeCursor(2, 0));
+    '1,3s/a/b/cg', 'aa\na \na\na', 'bb\nb \nb\na', 'a', makeCursor(2, 0));
 testSubstituteConfirm('ex_substitute_confirm_range_last',
-    '1,3s/a/b/c', 'aa\na \na\na', 'bb\nb \na\na', 'yyl', makeCursor(1, 0));
+    '1,3s/a/b/cg', 'aa\na \na\na', 'bb\nb \na\na', 'yyl', makeCursor(1, 0));
 //:noh should clear highlighting of search-results but allow to resume search through n
 testVim('ex_noh_clearSearchHighlight', function(cm, vim, helpers) {
   cm.openDialog = helpers.fakeOpenDialog('match');
