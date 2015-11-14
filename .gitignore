@@ -1,11 +1,11 @@
 /node_modules
 /npm-debug.log
-test.html
+/test*.html
 .tern-*
-<<<<<<< HEAD
-
 .DS_Store
-=======
 *~
 *.swp
->>>>>>> 7f560afa1ce8c6ce7a43c561e35bd43f4b9652c3
+=======
+.idea
+*.iml
+>>>>>>> codemirror/master
